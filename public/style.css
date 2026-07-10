@@ -1,0 +1,37 @@
+:root {
+  color-scheme: dark;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #07131f;
+  color: #f5f7fb;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: linear-gradient(135deg, #07131f, #102641); min-height: 100vh; }
+.app-shell { max-width: 1200px; margin: 0 auto; padding: 24px; }
+header { margin-bottom: 20px; }
+.title-row { display: flex; align-items: center; gap: 12px; }
+.title-icon { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 1.2rem; }
+header h1 { margin: 0; font-size: 2rem; }
+header p { margin: 4px 0 0; color: #93a8c5; }
+.grid { display: grid; gap: 24px; grid-template-columns: 1.2fr 0.8fr; }
+.panel { background: rgba(7, 19, 31, 0.85); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.25); }
+.card { background: rgba(255,255,255,0.06); border-radius: 16px; padding: 16px; margin-top: 14px; }
+form label { display: block; margin-bottom: 12px; font-size: 0.95rem; }
+input, select, button { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2f4b68; font-size: 1rem; }
+button { cursor: pointer; background: #2c8c5a; color: white; font-weight: 600; transition: transform 0.15s ease; }
+button:hover { transform: translateY(-1px); }
+button.secondary { background: #274a6d; }
+.hidden { display: none !important; }
+.tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+.tab { background: #203449; border: 1px solid #35536d; }
+.tab.active { background: #2c8c5a; }
+.option-btn { margin-bottom: 8px; }
+.option-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.option-btn.selected { border-color: #7ee0b7; background: #2a6a4c; }
+.round-status { margin-top: 10px; color: #7ee0b7; font-size: 0.95rem; }
+.message-box { margin-top: 16px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.05); }
+.score-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.scoreboard-notice { margin-top: 12px; color: #93a8c5; font-style: italic; }
+.score-row strong { color: #7ee0b7; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #274a6d; font-size: 0.82rem; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }

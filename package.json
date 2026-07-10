@@ -1,0 +1,13 @@
+{
+  "name": "quyet-sach-doi-moi",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.6.3"
+  }
+}

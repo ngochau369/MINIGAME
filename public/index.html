@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quyết Sách Đổi Mới</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header>
+        <div class="title-row">
+          <button id="host-home-btn" class="title-icon" aria-label="Về trang host">🏠</button>
+          <div>
+            <h1>Quyết Sách Đổi Mới</h1>
+            <p>Game thảo luận kinh tế và đổi mới cho lớp học</p>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="panel form-panel">
+          <div id="setup-view">
+            <h2>Tạo phòng hoặc tham gia</h2>
+            <!-- Tabs removed: navigation now via title icon -->
+
+            <form id="host-form" class="card">
+              <label>
+                Tên phòng
+                <input id="room-name" placeholder="Ví dụ: Lớp Kinh tế 8" />
+              </label>
+              <label>
+                Tên các nhóm (phân cách bằng dấu phẩy)
+                <input id="team-names" placeholder="Nhóm A, Nhóm B, Nhóm C" />
+              </label>
+              <label>
+                Thời gian mỗi vòng (giây)
+                <input id="round-duration" type="number" value="30" min="10" />
+              </label>
+              <button type="submit">Tạo phòng</button>
+            </form>
+
+            <form id="player-form" class="card hidden">
+              <label>
+                Tên của bạn
+                <input id="player-name" placeholder="Nhập tên" />
+              </label>
+              <label>
+                Mã phòng
+                <input id="room-code" placeholder="VD: ABCD" />
+              </label>
+              <label>
+                Chọn nhóm
+                <select id="team-select"></select>
+              </label>
+              <button type="submit">Vào phòng</button>
+            </form>
+          </div>
+
+          <div id="room-view" class="hidden">
+            <div class="card">
+              <h3 id="room-title">Phòng</h3>
+              <p>Mã phòng: <strong id="room-code-display"></strong></p>
+              <p>Trạng thái: <span id="room-status"></span></p>
+              <div id="host-controls" class="hidden">
+                <button id="start-game-btn">Bắt đầu trò chơi</button>
+                <button id="next-round-btn">Vòng tiếp theo</button>
+              </div>
+            </div>
+
+            <div id="round-card" class="card hidden">
+              <h3 id="round-title"></h3>
+              <p id="round-scenario"></p>
+              <div id="options-list"></div>
+              <div id="round-status" class="round-status"></div>
+              <p id="round-timer"></p>
+            </div>
+
+            <div id="result-card" class="card hidden">
+              <h3>Kết quả vòng</h3>
+              <p id="result-summary"></p>
+            </div>
+            <div id="host-tracker" class="card hidden">
+              <h3>Tracker (Host)</h3>
+              <div id="host-tracker-list">Chưa có dữ liệu</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel scoreboard-panel" id="scoreboard-panel">
+          <h2>Bảng điểm</h2>
+          <div id="scoreboard"></div>
+          <div id="scoreboard-notice" class="scoreboard-notice hidden"></div>
+          <div id="message-box" class="message-box"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js?v=2"></script>
+  </body>
+</html>
