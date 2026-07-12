@@ -45,6 +45,7 @@ const els = {
   guideBtn: document.getElementById('guide-btn'),
   guideModal: document.getElementById('guide-modal'),
   closeGuideBtn: document.getElementById('close-guide-btn')
+
 };
 
 function setMessage(text) {
@@ -140,8 +141,8 @@ function renderRoom() {
       });
       if (activeTeams.length < 2) {
         els.startGameBtn.disabled = true;
-        els.startGameBtn.title = "Cần ít nhất 2 nhóm có người chơi để bắt đầu";
-        els.startGameBtn.textContent = "Chờ thêm nhóm tham gia (cần ít nhất 2 nhóm)";
+        els.startGameBtn.title = "Cần ít nhất 2 thành viên có người chơi để bắt đầu";
+        els.startGameBtn.textContent = "Chờ thêm thành viên tham gia (cần ít nhất 2 thành viên)";
         els.startGameBtn.style.opacity = "0.6";
         els.startGameBtn.style.cursor = "not-allowed";
       } else {
@@ -222,7 +223,7 @@ function renderRoom() {
       `;
     });
 
-    els.scoreboard.innerHTML = table.join('') || '<p class="empty-lobby-text">Chưa có nhóm nào có thành viên tham gia</p>';
+    els.scoreboard.innerHTML = table.join('') || '<p class="empty-lobby-text">Chưa có người chơi nào tham gia</p>';
   }
 
   // Render lobby members
@@ -267,7 +268,7 @@ function renderRoom() {
         }
         return `${team.name}: <span class="badge-answer">${answer}</span>${feedback}`;
       });
-      els.roundStatus.innerHTML = finalTeams.length ? `Kết quả: ${finalTeams.join(' • ')}` : 'Chưa có nhóm nào chọn đáp án.';
+      els.roundStatus.innerHTML = finalTeams.length ? `Kết quả: ${finalTeams.join(' • ')}` : 'Chưa có người chơi nào chọn đáp án.';
     } else {
       const answeredTeams = (state.room.teams || []).map((team) => {
         const answers = state.room.playerAnswers?.[team.id] ? Object.values(state.room.playerAnswers[team.id]) : [];
@@ -280,8 +281,8 @@ function renderRoom() {
         return `${team.name}: ${entries.join(', ')}`;
       });
       els.roundStatus.innerHTML = answeredTeams.length
-        ? `Vote nhóm: ${answeredTeams.join(' • ')}`
-        : 'Chưa có nhóm nào chọn đáp án.';
+        ? `Vote người chơi: ${answeredTeams.join(' • ')}`
+        : 'Chưa có người chơi nào chọn đáp án.';
     }
 
     // Timer calculation & visual updates
@@ -346,7 +347,25 @@ if (els.tabHostBtn) {
 els.homeButton.addEventListener('click', (e) => {
   e.preventDefault();
   const modal = document.getElementById('website-qr-modal');
-  if (modal) {
+  const qrImg = modal ? modal.querySelector('.qr-code-wrapper img') : null;
+  if (modal && qrImg) {
+    let joinUrl = `https://minigame-nu-black.vercel.app/`;
+    if (state.room && state.room.id) {
+      joinUrl = `https://minigame-nu-black.vercel.app/?room=${state.room.id}`;
+    }
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`;
+    if (qrImg.getAttribute('src') !== qrApiUrl) {
+      qrImg.setAttribute('src', qrApiUrl);
+    }
+    
+    const modalInfo = modal.querySelector('.modal-info');
+    if (modalInfo) {
+      if (state.room && state.room.id) {
+        modalInfo.innerHTML = `Quét mã QR để vào thẳng phòng chơi <strong>${state.room.id}</strong>`;
+      } else {
+        modalInfo.innerHTML = `Quét mã QR để truy cập nhanh vào trò chơi <strong>Quyết Sách Đổi Mới</strong>`;
+      }
+    }
     modal.classList.remove('hidden');
   }
 });
@@ -501,7 +520,7 @@ socket.on('room:deleted', () => {
 
 socket.on('game:finished', ({ winner }) => {
   const conclusionText = "\n\nÝ nghĩa trò chơi: Nếu chỉ chọn tăng trưởng Kinh tế mà bỏ qua An sinh và Môi trường thì quốc gia sẽ sụp đổ. Đó là lý do vì sao bắt buộc phải chọn con đường phát triển bền vững, gắn tăng trưởng Kinh tế với tiến bộ, công bằng Xã hội và bảo vệ Môi trường (Kinh tế thị trường Định hướng XHCN)!";
-  setMessage(`Trò chơi đã kết thúc! Xin chúc mừng nhóm ${winner?.name || 'N/A'} đã xuất sắc giành chiến thắng chung cuộc!${conclusionText}`);
+  setMessage(`Trò chơi đã kết thúc! Xin chúc mừng thành viên ${winner?.name || 'N/A'} đã xuất sắc giành chiến thắng chung cuộc!${conclusionText}`);
 });
 
 socket.on('error', ({ message }) => {
