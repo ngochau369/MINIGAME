@@ -39,9 +39,7 @@ const els = {
   tabHostBtn: document.getElementById('tab-host-btn'),
   lobbyCard: document.getElementById('lobby-card'),
   lobbyPlayersList: document.getElementById('lobby-players-list'),
-  timerProgressBar: document.getElementById('timer-progress-bar'),
-  hostTracker: document.getElementById('host-tracker'),
-  hostTrackerList: document.getElementById('host-tracker-list')
+  timerProgressBar: document.getElementById('timer-progress-bar')
 };
 
 function setMessage(text) {
@@ -169,20 +167,25 @@ function renderRoom() {
       return totalB - totalA;
     });
 
-    const table = sortedTeams.map((team) => {
+    const table = sortedTeams.map((team, index) => {
       const total = team.score.economy + team.score.social + team.score.environment;
       const isEliminated = team.eliminated;
+      const isLeader = index === 0;
       
       const econPct = Math.min(100, Math.max(0, team.score.economy));
       const socPct = Math.min(100, Math.max(0, team.score.social));
       const envPct = Math.min(100, Math.max(0, team.score.environment));
       
       return `
-        <div class="score-row ${isEliminated ? 'eliminated' : ''}">
+        <div class="score-row ${isEliminated ? 'eliminated' : ''} ${isLeader ? 'leader' : ''}">
           <div class="score-team-meta">
-            <span class="team-name-header">
-              ${team.name}${isEliminated ? ' 💀 (Bị loại)' : ''}
-            </span>
+            <div class="score-team-main">
+              <div class="score-rank-badge">${index + 1}</div>
+              <div class="score-team-text">
+                <span class="team-name-header">${team.name}${isEliminated ? ' 💀' : ''}</span>
+                <span class="team-subtext">${isEliminated ? 'Bị loại' : 'Đang tranh tài'}</span>
+              </div>
+            </div>
             <span class="team-total-score">${total}đ</span>
           </div>
           <div class="score-bars">
@@ -194,14 +197,14 @@ function renderRoom() {
               <span class="score-bar-value">${team.score.economy}</span>
             </div>
             <div class="score-bar-group" data-stat="social">
-              <span class="score-bar-label">XÃ HỘI</span>
+              <span class="score-bar-label">XH</span>
               <div class="score-bar-outer">
                 <div class="score-bar-inner" style="width: ${socPct}%;"></div>
               </div>
               <span class="score-bar-value">${team.score.social}</span>
             </div>
             <div class="score-bar-group" data-stat="environment">
-              <span class="score-bar-label">MÔI T.</span>
+              <span class="score-bar-label">MT</span>
               <div class="score-bar-outer">
                 <div class="score-bar-inner" style="width: ${envPct}%;"></div>
               </div>
@@ -279,58 +282,6 @@ function renderRoom() {
       els.timerProgressBar.style.width = `${percentage}%`;
     }
 
-    // Host Tracker Details
-    if (state.role === 'host') {
-      els.hostTracker.classList.remove('hidden');
-      const isRoundResult = state.room.status === 'round-result';
-      
-      const list = (state.room.teams || []).map((team) => {
-        const teamPlayersCount = state.room.players.filter((p) => p.teamId === team.id).length;
-        if (isRoundResult) {
-          const answer = state.room.roundAnswers?.[team.id] || 'chưa trả lời';
-          const correct = state.room.roundCorrectAnswer ? answer === state.room.roundCorrectAnswer : false;
-          const statusIcon = answer === 'chưa trả lời' ? '❌ Chưa trả lời' : (correct ? '✅ Trả lời ĐÚNG' : '⚠️ Trả lời SAI');
-          const badgeClass = answer === 'chưa trả lời' ? 'badge-danger' : (correct ? 'badge-success' : 'badge-primary');
-          
-          return `
-            <div class="host-tracker-item">
-              <div class="host-tracker-status">
-                <span>${team.name}</span>
-                <span class="badge ${badgeClass}">${answer}</span>
-              </div>
-              <div class="host-tracker-detail">
-                ${statusIcon}
-              </div>
-            </div>
-          `;
-        } else {
-          const answers = state.room.playerAnswers?.[team.id] ? Object.values(state.room.playerAnswers[team.id]) : [];
-          const votedCount = answers.length;
-          const unique = Array.from(new Set(answers));
-          const isDone = votedCount > 0 && votedCount === teamPlayersCount;
-          const statusIcon = isDone ? '✅ Hoàn thành' : (votedCount > 0 ? '⏳ Đang biểu quyết' : '❌ Đang chờ');
-          const detail = votedCount > 0 
-            ? `${votedCount}/${teamPlayersCount} phiếu ${unique.length > 1 ? `(${unique.join(', ')})` : `(${unique[0]})`}`
-            : `0/${teamPlayersCount} phiếu`;
-            
-          return `
-            <div class="host-tracker-item">
-              <div class="host-tracker-status">
-                <span>${team.name}</span>
-                <span class="status-text" style="color:${isDone ? 'var(--success)' : 'var(--warning)'};">${statusIcon}</span>
-              </div>
-              <div class="host-tracker-detail">
-                ${detail}
-              </div>
-            </div>
-          `;
-        }
-      }).join('');
-      els.hostTrackerList.innerHTML = list || '<p class="empty-lobby-text">Chưa có nhóm</p>';
-    } else {
-      els.hostTracker.classList.add('hidden');
-    }
-    
     els.resultCard.classList.add('hidden');
   } else {
     els.roundCard.classList.add('hidden');
