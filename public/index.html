@@ -6,6 +6,7 @@
     <title>Quyết Sách Đổi Mới</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css" />
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -63,7 +64,12 @@
               </div>
               <div class="form-group">
                 <label for="room-code">Mã phòng (4 ký tự)</label>
-                <input id="room-code" placeholder="VD: ABCD" maxlength="4" style="text-transform: uppercase;" required />
+                <div class="input-with-action">
+                  <input id="room-code" placeholder="VD: ABCD" maxlength="4" style="text-transform: uppercase;" required />
+                  <button type="button" id="scan-qr-btn" class="btn-action-icon" title="Quét mã QR">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2m0 10v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="3" height="3"></rect><rect x="14" y="7" width="3" height="3"></rect><rect x="7" y="14" width="3" height="3"></rect><rect x="14" y="14" width="3" height="3"></rect></svg>
+                  </button>
+                </div>
               </div>
               <div class="form-group">
                 <label for="team-select">Chọn nhóm</label>
@@ -84,6 +90,12 @@
               </div>
               <div class="status-info">
                 <p>Trạng thái: <span id="room-status" class="status-text">Đang đợi</span></p>
+              </div>
+              <div id="host-qr-container" class="host-qr-container hidden">
+                <div class="qr-title">Quét QR để tham gia nhanh:</div>
+                <div class="qr-code-wrapper">
+                  <img id="host-qr-image" src="" alt="Mã QR phòng chơi" />
+                </div>
               </div>
               <div id="host-controls" class="hidden">
                 <button id="start-game-btn" class="btn-success">Bắt đầu trò chơi</button>
@@ -146,6 +158,22 @@
           </div>
         </section>
       </main>
+    </div>
+
+    <!-- QR Scan Modal -->
+    <div id="qr-scan-modal" class="modal-backdrop hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Quét Mã QR</h3>
+          <button type="button" id="close-qr-modal-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="qr-reader-container">
+            <div id="qr-reader"></div>
+          </div>
+          <p class="modal-info">Đưa camera vào hướng mã QR chứa đường dẫn phòng chơi hoặc mã phòng để tự động kết nối.</p>
+        </div>
+      </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

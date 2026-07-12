@@ -39,7 +39,15 @@ const els = {
   tabHostBtn: document.getElementById('tab-host-btn'),
   lobbyCard: document.getElementById('lobby-card'),
   lobbyPlayersList: document.getElementById('lobby-players-list'),
-  timerProgressBar: document.getElementById('timer-progress-bar')
+  timerProgressBar: document.getElementById('timer-progress-bar'),
+
+  // QR elements
+  scanQrBtn: document.getElementById('scan-qr-btn'),
+  qrScanModal: document.getElementById('qr-scan-modal'),
+  closeQrModalBtn: document.getElementById('close-qr-modal-btn'),
+  hostQrContainer: document.getElementById('host-qr-container'),
+  hostQrImage: document.getElementById('host-qr-image'),
+  roomCodeInput: document.getElementById('room-code')
 };
 
 function setMessage(text) {
@@ -120,6 +128,20 @@ function renderRoom() {
 
   const isHost = state.role === 'host';
   els.hostControls.classList.toggle('hidden', !isHost);
+
+  // Generate QR Code for Host room to display in lobby
+  if (els.hostQrContainer && els.hostQrImage) {
+    if (isHost && state.room.status === 'lobby') {
+      els.hostQrContainer.classList.remove('hidden');
+      const joinUrl = `${window.location.origin}/?room=${state.room.id}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(joinUrl)}`;
+      if (els.hostQrImage.getAttribute('src') !== qrApiUrl) {
+        els.hostQrImage.setAttribute('src', qrApiUrl);
+      }
+    } else {
+      els.hostQrContainer.classList.add('hidden');
+    }
+  }
 
   if (isHost) {
     const showStart = state.room.status === 'lobby';
@@ -361,6 +383,111 @@ document.getElementById('room-code').addEventListener('input', (event) => {
   }
 });
 
+// QR Code Scanner Logic
+let html5QrCode = null;
+
+function closeQrModal() {
+  if (els.qrScanModal) {
+    els.qrScanModal.classList.add('hidden');
+  }
+  if (html5QrCode) {
+    if (html5QrCode.isScanning) {
+      html5QrCode.stop().then(() => {
+        html5QrCode = null;
+      }).catch((err) => {
+        console.error("Lỗi khi dừng camera:", err);
+        html5QrCode = null;
+      });
+    } else {
+      html5QrCode = null;
+    }
+  }
+}
+
+function handleQrCodeSuccess(decodedText) {
+  let code = decodedText.trim();
+  
+  // Kiểm tra xem có phải là đường dẫn URL không
+  try {
+    if (code.startsWith('http://') || code.startsWith('https://')) {
+      const url = new URL(code);
+      const roomParam = url.searchParams.get('room');
+      if (roomParam) {
+        code = roomParam;
+      } else {
+        // Nếu không có param room, thử lấy path cuối hoặc phần cuối của URL
+        const parts = url.pathname.split('/');
+        const lastPart = parts[parts.length - 1];
+        if (lastPart && lastPart.length >= 3 && lastPart.length <= 6) {
+          code = lastPart;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Lỗi parse URL từ QR:", e);
+  }
+
+  code = code.toUpperCase();
+  if (code.length >= 3) {
+    if (els.roomCodeInput) {
+      els.roomCodeInput.value = code;
+    }
+    closeQrModal();
+    socket.emit('player:preview-room', { roomCode: code });
+    setMessage(`Đã quét được mã phòng: ${code}. Vui lòng chọn nhóm.`);
+  } else {
+    setMessage(`Lỗi: Mã QR đã quét (${code}) không phải mã phòng hợp lệ.`);
+  }
+}
+
+if (els.scanQrBtn) {
+  els.scanQrBtn.addEventListener('click', () => {
+    if (els.qrScanModal) {
+      els.qrScanModal.classList.remove('hidden');
+    }
+    
+    // Khởi tạo và chạy scanner
+    try {
+      html5QrCode = new Html5Qrcode("qr-reader");
+      const config = { fps: 15, qrbox: { width: 220, height: 220 } };
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          handleQrCodeSuccess(decodedText);
+        },
+        (errorMessage) => {
+          // Chỉ là log quét liên tục, không cần bắn alert hay log console nhiều gây chậm ứng dụng
+        }
+      ).catch((err) => {
+        console.error("Lỗi khởi động camera:", err);
+        setMessage("Lỗi: Không thể truy cập Camera. Hãy cấp quyền hoặc sử dụng camera khác.");
+        closeQrModal();
+      });
+    } catch (e) {
+      console.error(e);
+      setMessage("Lỗi: Không thể khởi chạy trình quét QR.");
+      closeQrModal();
+    }
+  });
+}
+
+if (els.closeQrModalBtn) {
+  els.closeQrModalBtn.addEventListener('click', () => {
+    closeQrModal();
+  });
+}
+
+// Đóng modal khi click ra ngoài
+if (els.qrScanModal) {
+  els.qrScanModal.addEventListener('click', (e) => {
+    if (e.target === els.qrScanModal) {
+      closeQrModal();
+    }
+  });
+}
+
 els.playerForm.addEventListener('submit', (event) => {
   event.preventDefault();
   const payload = {
@@ -472,7 +599,25 @@ function startTimerTick() {
   }, 1000);
 }
 
+// Check for room code query parameter in URL on startup
+function checkUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomCode = urlParams.get('room');
+  if (roomCode) {
+    const cleanCode = roomCode.trim().toUpperCase();
+    if (cleanCode.length >= 3) {
+      if (els.roomCodeInput) {
+        els.roomCodeInput.value = cleanCode;
+      }
+      switchView('player');
+      socket.emit('player:preview-room', { roomCode: cleanCode });
+      setMessage(`Đang tải thông tin phòng ${cleanCode} từ liên kết...`);
+    }
+  }
+}
+
 // Initial Setup
 switchView('player'); // Set default tab to player
 renderRoom();
 startTimerTick();
+checkUrlParams();
