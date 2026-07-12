@@ -423,6 +423,7 @@ els.optionsList.addEventListener('click', (event) => {
 // Socket Events
 socket.on('connect', () => {
   setMessage('Hệ thống: Đã kết nối với máy chủ.');
+  checkUrlParams();
 });
 
 socket.on('room:created', ({ room }) => {
@@ -500,7 +501,9 @@ function startTimerTick() {
 }
 
 // Check for room code query parameter in URL on startup
+let paramsChecked = false;
 function checkUrlParams() {
+  if (paramsChecked) return;
   const urlParams = new URLSearchParams(window.location.search);
   const roomCode = urlParams.get('room');
   if (roomCode) {
@@ -512,6 +515,7 @@ function checkUrlParams() {
       switchView('player');
       socket.emit('player:preview-room', { roomCode: cleanCode });
       setMessage(`Đang tải thông tin phòng ${cleanCode} từ liên kết...`);
+      paramsChecked = true;
     }
   }
 }
@@ -520,4 +524,3 @@ function checkUrlParams() {
 switchView('player'); // Set default tab to player
 renderRoom();
 startTimerTick();
-checkUrlParams();
