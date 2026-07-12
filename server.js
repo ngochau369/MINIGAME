@@ -12,102 +12,102 @@ app.use(express.static(path.join(__dirname, 'public')));
 const rounds = [
   {
     id: 1,
-    title: 'Vòng 1: Đêm trước đổi mới',
-    scenario: 'Nền kinh tế đang ở cuối thập niên 1980, lạm phát phi mã, hàng hóa khan hiếm, nhân dân thiếu gạo ăn.',
+    title: 'Vòng 1: Đêm Trước Đổi Mới (Bối cảnh lịch sử)',
+    scenario: 'Đất nước đang ở cuối thập niên 1980, lạm phát phi mã, hàng hóa khan hiếm do cơ chế bao cấp, ngăn sông cấm chợ. Nhân dân thiếu gạo ăn.',
     options: [
-      { id: 'A', text: 'Tiếp tục bao cấp và kiểm soát giá', effects: { economy: -20, social: -10, environment: 0 } },
-      { id: 'B', text: 'Chuyển sang kinh tế thị trường có kiểm soát', effects: { economy: 20, social: 20, environment: 0 } },
-      { id: 'C', text: 'Để tự do hoàn toàn, không kiểm soát', effects: { economy: -40, social: -20, environment: 0 } }
+      { id: 'A', text: 'Giữ nguyên cơ chế kế hoạch hóa tập trung, siết chặt kỷ luật phân phối.', effects: { economy: -20, social: -10, environment: 0 }, explanation: 'Giữ nguyên bao cấp chỉ làm trầm trọng thêm sự thiếu hụt hàng hóa và lạm phát phi mã.' },
+      { id: 'B', text: 'Xóa bỏ ngăn sông cấm chợ, thừa nhận kinh tế hàng hóa, cho phép người dân tự do lưu thông nông sản.', effects: { economy: 20, social: 20, environment: 0 }, explanation: 'Đây là tiền đề đổi mới lịch sử, giải phóng sức sản xuất và lưu thông hàng hóa tự do.' },
+      { id: 'C', text: 'Đóng cửa biên giới, tự cung tự cấp tuyệt đối.', effects: { economy: -40, social: -20, environment: 0 }, explanation: 'Tự cung tự cấp tuyệt đối đẩy nền kinh tế vào khủng hoảng cô lập nghiêm trọng hơn.' }
     ]
   },
   {
     id: 2,
-    title: 'Vòng 2: Bản nhạc của thị trường',
-    scenario: 'Nền kinh tế bắt đầu đổi mới, giá bán các mặt hàng thiết yếu cần được quyết định.',
+    title: 'Vòng 2: Bản Nhạc Của Thị Trường (Cơ chế vận hành)',
+    scenario: 'Nền kinh tế bắt đầu chuyển sang KTTT. Các nhóm muốn quyết định giá bán mặt hàng thiết yếu (như gạo, quần áo).',
     options: [
-      { id: 'A', text: 'Giữ giá thấp bằng mệnh lệnh', effects: { economy: -20, social: 0, environment: 0 } },
-      { id: 'B', text: 'Cho giá tự do và chịu rủi ro', effects: { economy: 20, social: -30, environment: 0 } },
-      { id: 'C', text: 'Cho giá tự do nhưng có hỗ trợ người nghèo', effects: { economy: 20, social: 10, environment: 0 } }
+      { id: 'A', text: 'Nhà nước tiếp tục áp đặt một mức giá cố định cho toàn quốc.', effects: { economy: -20, social: 0, environment: 0 }, explanation: 'Mệnh lệnh hành chính triệt tiêu động lực sản xuất và làm phát sinh thị trường chợ đen.' },
+      { id: 'B', text: 'Thả nổi hoàn toàn, để các thương lái tự do đẩy giá lên bao nhiêu tùy thích.', effects: { economy: 20, social: -30, environment: 0 }, explanation: 'Thả nổi cực đoan dẫn đến đầu cơ tích trữ, giá cả leo thang làm người nghèo kêu than.' },
+      { id: 'C', text: 'Để giá cả hình thành tự do theo Quy luật Cung - Cầu, nhưng Nhà nước có quỹ dự trữ để can thiệp nếu giá biến động quá cực đoan.', effects: { economy: 20, social: 10, environment: 0 }, explanation: 'Vận dụng đúng quy luật cung cầu nhưng vẫn có sự điều tiết vĩ mô của Nhà nước để bảo vệ an sinh xã hội.' }
     ]
   },
   {
     id: 3,
-    title: 'Vòng 3: Động lực từ cạnh tranh',
-    scenario: 'Doanh nghiệp cũ sản xuất hàng kém chất lượng, tư nhân muốn tham gia để tạo cạnh tranh.',
+    title: 'Vòng 3: Động Lực Từ Cạnh Tranh (Tính ưu việt của KTTT)',
+    scenario: 'Các doanh nghiệp cũ sản xuất hàng hóa kém chất lượng, mẫu mã xấu vì không có ai thi đua. Khối tư nhân đề xuất xin phép tham gia sản xuất để cạnh tranh.',
     options: [
-      { id: 'A', text: 'Giữ nguyên mô hình cũ', effects: { economy: -20, social: 0, environment: 0 } },
-      { id: 'B', text: 'Cho tư nhân tham gia mạnh mẽ', effects: { economy: 30, social: 0, environment: -10 } },
-      { id: 'C', text: 'Cho tư nhân nhập cuộc rất giới hạn', effects: { economy: -10, social: 0, environment: 0 } }
+      { id: 'A', text: 'Cấm tư nhân để bảo hộ doanh nghiệp nhà nước.', effects: { economy: -20, social: 0, environment: 0 }, explanation: 'Bảo hộ độc quyền làm doanh nghiệp trì trệ, sản phẩm kém chất lượng và triệt tiêu động lực phát triển.' },
+      { id: 'B', text: 'Cho phép tư nhân tham gia, thúc đẩy Quy luật Cạnh tranh để kích thích đổi mới công nghệ và giảm giá thành.', effects: { economy: 30, social: 0, environment: -10 }, explanation: 'Quy luật cạnh tranh kích thích đổi mới công nghệ và giảm giá thành, tuy nhiên việc sản xuất công nghiệp ồ ạt có thể gây áp lực lên môi trường.' },
+      { id: 'C', text: 'Cho phép tư nhân tham gia nhưng đánh thuế kinh doanh 80% để họ không giàu hơn doanh nghiệp nhà nước.', effects: { economy: -10, social: 0, environment: 0 }, explanation: 'Đánh thuế quá cao triệt tiêu hoàn toàn động lực đầu tư và kinh doanh của khối tư nhân.' }
     ]
   },
   {
     id: 4,
-    title: 'Vòng 4: Ai giữ vai trò chủ đạo?',
-    scenario: 'Hệ thống điện và nước sạch cần được đầu tư lớn, nhưng chi phí có thể tăng cao.',
+    title: 'Vòng 4: Ai Giữ Vai Trò Chủ Đạo? (Tính chất sở hữu)',
+    scenario: 'Hệ thống lưới điện quốc gia và nguồn cung nước sạch cần được đầu tư nâng cấp lớn.',
     options: [
-      { id: 'A', text: 'Đầu tư lớn, để giá tăng mạnh', effects: { economy: 30, social: -30, environment: 0 } },
-      { id: 'B', text: 'Đầu tư vừa phải, có kế hoạch', effects: { economy: 10, social: 20, environment: 0 } },
-      { id: 'C', text: 'Không đầu tư, giữ nguyên hiện trạng', effects: { economy: -20, social: 0, environment: 0 } }
+      { id: 'A', text: 'Bán đứt toàn bộ hệ thống điện, nước cho các tập đoàn tư nhân nước ngoài quản lý.', effects: { economy: 30, social: -30, environment: 0 }, explanation: 'Tư nhân hóa hoàn toàn hạ tầng thiết yếu giúp tăng vốn đầu tư nhưng làm mất quyền kiểm soát giá, khiến giá điện nước tăng phi mã.' },
+      { id: 'B', text: 'Để Kinh tế Nhà nước nắm giữ và đầu tư (giữ vai trò chủ đạo) nhằm điều tiết giá rẻ cho người dân, đồng thời kêu gọi tư nhân làm các dự án năng lượng phụ trợ.', effects: { economy: 10, social: 20, environment: 0 }, explanation: 'Kinh tế Nhà nước nắm các lĩnh vực then chốt (chủ đạo) bảo đảm an sinh, đồng thời huy động nguồn lực tư nhân hỗ trợ.' },
+      { id: 'C', text: 'Không nâng cấp nữa, có bao nhiêu dùng bấy nhiêu.', effects: { economy: -20, social: 0, environment: 0 }, explanation: 'Hạ tầng yếu kém làm tê liệt các hoạt động kinh tế và sản xuất khác.' }
     ]
   },
   {
     id: 5,
-    title: 'Vòng 5: Sức mạnh doanh nghiệp tư nhân',
-    scenario: 'Kinh tế tư nhân đang bùng nổ, tạo việc làm mới nhưng vẫn bị rào cản hành chính.',
+    title: 'Vòng 5: Sức Mạnh Doanh Nghiệp Tư Nhân (Thành phần kinh tế)',
+    scenario: 'Khối kinh tế tư nhân trong nước đang bùng nổ, tạo ra phần lớn việc làm mới nhưng đang vướng rào cản về cơ chế hành chính và tiếp cận nguồn lực đất đai, vốn.',
     options: [
-      { id: 'A', text: 'Để tư nhân phát triển như chaebol', effects: { economy: 30, social: -20, environment: 0 } },
-      { id: 'B', text: 'Để tư nhân phát triển nhưng Nhà nước giữ vai trò chủ đạo', effects: { economy: 20, social: 10, environment: 0 } },
-      { id: 'C', text: 'Giữ chế độ kiểm soát chặt', effects: { economy: -30, social: 0, environment: 0 } }
+      { id: 'A', text: 'Tập trung tối đa mọi nguồn lực, chính sách ưu đãi tài chính để xây dựng các Tập đoàn kinh tế tư nhân tư bản quy mô lớn làm "mũi nhọn" kéo nền kinh tế đi lên.', effects: { economy: 30, social: -20, environment: 0 }, explanation: 'Bẫy Chaebol: Tăng trưởng nhanh nhưng dễ dẫn đến bất bình đẳng và tài phiệt thao túng, đánh mất vai trò chủ đạo của kinh tế Nhà nước.' },
+      { id: 'B', text: 'Thực hiện nhất quán chính sách kinh tế nhiều thành phần, hoàn thiện thể chế để kinh tế tư nhân là một động lực quan trọng, bình đẳng về quyền tiếp cận nguồn lực.', effects: { economy: 20, social: 10, environment: 0 }, explanation: 'Kinh tế tư nhân là động lực quan trọng, phát triển bình đẳng trong nền kinh tế nhiều thành phần theo đúng lý luận định hướng XHCN.' },
+      { id: 'C', text: 'Quy định tỷ lệ trần về quy mô vốn và lao động đối với doanh nghiệp tư nhân nhằm ngăn chặn sự tích tụ tư bản quá mức, bảo đảm không làm phai nhạt định hướng XHCN.', effects: { economy: -30, social: 0, environment: 0 }, explanation: 'Bẫy tư duy bao cấp: Khống chế quy mô kìm hãm lực lượng sản xuất phát triển, gây suy thoái kinh tế vĩ mô.' }
     ]
   },
   {
     id: 6,
-    title: 'Vòng 6: Ra khơi biển lớn',
-    scenario: 'Đất nước có cơ hội hội nhập với CPTPP/EVFTA, nhưng phải mở cửa thị trường và tuân thủ tiêu chuẩn mới.',
+    title: 'Vòng 6: Ra Khơi Biển Lớn (Hội nhập quốc tế)',
+    scenario: 'Đất nước đứng trước cơ hội ký kết Hiệp định Thương mại Tự do thế hệ mới (CPTPP/EVFTA). Việc này yêu cầu phải mở cửa hoàn toàn thị trường mua sắm công và công nhận các tiêu chuẩn lao động quốc tế.',
     options: [
-      { id: 'A', text: 'Mở cửa hoàn toàn và để doanh nghiệp nội địa tự chịu áp lực', effects: { economy: 20, social: -30, environment: 0 } },
-      { id: 'B', text: 'Hội nhập có kiểm soát, chọn lọc đúng lúc', effects: { economy: 30, social: 0, environment: 0 } },
-      { id: 'C', text: 'Cố giữ kín, không hội nhập', effects: { economy: -20, social: 0, environment: 0 } }
+      { id: 'A', text: 'Ký kết ngay lập tức, chấp nhận áp dụng liệu pháp "sốc" để thị trường tự do hóa toàn diện, buộc các doanh nghiệp trong nước phải tự bơi hoặc tự đào thái để trưởng thành.', effects: { economy: -10, social: -30, environment: 0 }, explanation: 'Tự do hóa toàn diện quá nhanh khiến doanh nghiệp nội địa chưa kịp chuẩn bị sẽ sụp đổ hàng loạt.' },
+      { id: 'B', text: 'Ký kết có lộ trình, kết hợp chủ động hội nhập kinh tế quốc tế với nâng cao năng lực tự chủ của nền kinh tế, giữ vững độc lập tự chủ về chính trị và an ninh.', effects: { economy: 30, social: 0, environment: 0 }, explanation: 'Hội nhập quốc tế chủ động, đi đôi với tự chủ kinh tế là đường lối đúng đắn bảo đảm độc lập và phát triển vững chắc.' },
+      { id: 'C', text: 'Tuyên bố hoãn ký kết, thiết lập các hàng rào thuế quan kỹ thuật bảo hộ nghiêm ngặt để xây dựng hoàn chỉnh chuỗi cung ứng nội địa trước khi ra biển lớn.', effects: { economy: -20, social: 0, environment: 0 }, explanation: 'Tư duy bế quan tỏa cảng làm đất nước bị cô lập, bỏ lỡ cơ hội vàng và tụt hậu so với thế giới.' }
     ]
   },
   {
     id: 7,
-    title: 'Vòng 7: Bài toán phân phối',
-    scenario: 'GDP tăng nhanh nhưng khoảng cách giàu nghèo ngày càng lớn, chỉ số bất bình đẳng đã báo động.',
+    title: 'Vòng 7: Bài Toán Phân Phối (Quan hệ lợi ích)',
+    scenario: 'Tốc độ tăng trưởng GDP rất cao nhưng chỉ số bất bình đẳng (Gini) chạm mức báo động. Khoảng cách thu nhập giữa nhóm 20% giàu nhất và nhóm 20% nghèo nhất ngày càng giãn rộng.',
     options: [
-      { id: 'A', text: 'Để bất bình đẳng tự điều chỉnh', effects: { economy: 0, social: -30, environment: 0 } },
-      { id: 'B', text: 'Đầu tư công bằng và phân phối lại', effects: { economy: 10, social: 20, environment: 0 } },
-      { id: 'C', text: 'Tập trung vào tăng trưởng dù bỏ qua công bằng', effects: { economy: -40, social: 10, environment: 0 } }
+      { id: 'A', text: 'Thực hiện mô hình "tăng trưởng trước, phân phối sau"; chấp nhận bất bình đẳng trong giai đoạn đầu để tích lũy tư bản, tạo động lực kéo con tàu kinh tế đi nhanh hơn.', effects: { economy: 0, social: -30, environment: 0 }, explanation: 'Bẫy tăng trưởng nóng (Đường cong Kuznets): Bất bình đẳng kéo dài gây xung đột xã hội, bất ổn chính trị, hủy hoại mục tiêu công bằng văn minh.' },
+      { id: 'B', text: 'Thực hiện chế độ phân phối lấy phân phối theo kết quả lao động và hiệu quả kinh tế làm chủ yếu; gắn tăng trưởng kinh tế với tiến bộ và công bằng xã hội trong từng bước, từng chính sách phát triển.', effects: { economy: 10, social: 20, environment: 0 }, explanation: 'Gắn tăng trưởng kinh tế với công bằng xã hội là bản chất ưu việt của định hướng XHCN.' },
+      { id: 'C', text: 'Áp dụng chính sách điều tiết thu nhập triệt để: Đánh thuế tài sản lũy tiến cực cao đối với giới thượng lưu và lập tức bao cấp toàn diện y tế, giáo dục, nhà ở miễn phí cho toàn dân.', effects: { economy: -40, social: 10, environment: 0 }, explanation: 'Bẫy cào bằng: Đánh thuế triệt tiêu động lực sáng tạo, đưa đất nước quay lại thời kỳ bao cấp nghèo nàn.' }
     ]
   },
   {
     id: 8,
-    title: 'Vòng 8: Bóng ma độc quyền',
-    scenario: 'Một tập đoàn công nghệ lớn chiếm 75% thị phần, bắt đầu tăng giá và ép các startup.',
+    title: 'Vòng 8: Bóng Ma Độc Quyền (Khuyết tật thị trường)',
+    scenario: 'Một Tập đoàn công nghệ - viễn thông lớn chiếm 75% thị phần trong nước, bắt đầu có biểu hiện tăng giá dịch vụ vô căn cứ và chèn ép, không cho các doanh nghiệp khởi nghiệp (Startup) kết nối vào hệ tầng hạ tầng của họ.',
     options: [
-      { id: 'A', text: 'Để họ độc quyền, không can thiệp', effects: { economy: 0, social: -30, environment: 0 } },
-      { id: 'B', text: 'Can thiệp để bảo vệ cạnh tranh', effects: { economy: 10, social: 20, environment: 0 } },
-      { id: 'C', text: 'Để mặc cho họ, không khuyến khích đổi mới', effects: { economy: -20, social: 0, environment: 0 } }
+      { id: 'A', text: 'Tôn trọng quyền tự do kinh doanh và quy luật cạnh tranh của thị trường; Tập đoàn này mạnh lên là do họ giỏi, nhà nước không nên can thiệp làm méo mó dòng chảy thị trường.', effects: { economy: 0, social: -30, environment: 0 }, explanation: 'Dung túng độc quyền bóp nghẹt thị trường, khiến người dân chịu thiệt và chặn đứng cơ hội của các doanh nghiệp trẻ.' },
+      { id: 'B', text: 'Sử dụng vai trò Nhà nước pháp quyền để quản lý, giám sát thông qua Luật Cạnh tranh; kiểm soát độc quyền, xử phạt hành vi lạm dụng vị trí thống lĩnh thị trường để bảo vệ môi trường cạnh tranh lành mạnh.', effects: { economy: 10, social: 20, environment: 0 }, explanation: 'Nhà nước quản lý thị trường bằng pháp luật cạnh tranh để kiến tạo sân chơi công bằng và lành mạnh cho tất cả các bên.' },
+      { id: 'C', text: 'Tiến hành quốc hữu hóa tập đoàn này, chuyển toàn bộ cổ phần về cho Nhà nước quản lý trực tiếp nhằm bảo đảm quyền lợi tối cao cho nhân dân và giữ vững vai trò chủ đạo.', effects: { economy: -20, social: 0, environment: 0 }, explanation: 'Can thiệp thô bạo bằng cách hành chính hóa doanh nghiệp triệt tiêu tính cạnh tranh tự nhiên và đổi mới sáng tạo.' }
     ]
   },
   {
     id: 9,
-    title: 'Vòng 9: Thảm họa sông xanh',
-    scenario: 'Các dòng sông gần khu công nghiệp bị ô nhiễm nặng do doanh nghiệp lén xả thải.',
+    title: 'Vòng 9: Thảm Họa Sông Xanh (Khuyết tật môi trường)',
+    scenario: 'Các dòng sông lớn gần khu công nghiệp bị ô nhiễm nặng do doanh nghiệp lén xả thải. Các tổ chức quốc tế đe dọa sẽ áp "thuế carbon" và tẩy chay hàng hóa xuất khẩu của nước bạn nếu không sửa đổi quy trình.',
     options: [
-      { id: 'A', text: 'Đóng cửa doanh nghiệp và xử lý nghiêm', effects: { economy: -10, social: 10, environment: 30 } },
-      { id: 'B', text: 'Dùng tiền thuế để bù hậu quả', effects: { economy: -30, social: 0, environment: -10 } },
-      { id: 'C', text: 'Im lặng để giữ tăng trưởng', effects: { economy: -40, social: 0, environment: 10 } }
+      { id: 'A', text: 'Chấp nhận giảm một phần tốc độ tăng trưởng kinh tế ngắn hạn; kiên quyết không đánh đổi môi trường lấy tăng trưởng kinh tế, áp dụng các chế tài kinh tế xanh và bắt buộc doanh nghiệp chuyển đổi công nghệ tuần hoàn.', effects: { economy: -10, social: 10, environment: 30 }, explanation: 'Phát triển bền vững đòi hỏi không đánh đổi môi trường lấy tăng trưởng kinh tế ngắn hạn, đáp ứng xu thế kinh tế xanh toàn cầu.' },
+      { id: 'B', text: 'Thành lập quỹ ngân sách nhà nước để chi trả toàn bộ chi phí xử lý ô nhiễm và làm sạch các dòng sông, nhằm chia sẻ gánh nặng tài chính, giúp doanh nghiệp yên tâm tập trung sản xuất.', effects: { economy: -30, social: 0, environment: -10 }, explanation: 'Lấy tiền thuế của dân bù đắp sai phạm của doanh nghiệp xả thải tạo ra tiền lệ xấu và kìm hãm chuyển đổi xanh.' },
+      { id: 'C', text: 'Tạm thời đình chỉ hoạt động của toàn bộ các ngành công nghiệp nặng có nguy cơ xả thải cao cho đến khi xây dựng xong hệ thống giám sát môi trường tự động trên toàn quốc.', effects: { economy: -40, social: 0, environment: 10 }, explanation: 'Tư duy cực đoan làm đứt gãy sản xuất công nghiệp đột ngột, gây thiệt hại nghiêm trọng cho nền kinh tế vĩ mô.' }
     ]
   },
   {
     id: 10,
-    title: 'Vòng 10: Khủng hoảng toàn cầu',
-    scenario: 'Một cuộc khủng hoảng tài chính toàn cầu làm xuất khẩu đóng băng, hàng loạt doanh nghiệp thiếu dòng tiền.',
+    title: 'Vòng 10: Khủng Hoảng Toàn Cầu (Kiến tạo vĩ mô)',
+    scenario: 'Một cuộc khủng hoảng tài chính toàn cầu nổ ra khiến thị trường xuất khẩu bị đóng băng. Hàng loạt doanh nghiệp thiếu dòng tiền, có nguy cơ phá sản dây chuyền, hệ thống ngân hàng đối mặt với nợ xấu tăng vọt.',
     options: [
-      { id: 'A', text: 'Để thị trường tự xử lý', effects: { economy: -30, social: -30, environment: 0 } },
-      { id: 'B', text: 'Can thiệp có kiểm soát để ổn định', effects: { economy: 20, social: 20, environment: 0 } },
-      { id: 'C', text: 'Cắt giảm mạnh và để sụp đổ', effects: { economy: -40, social: -20, environment: 0 } }
+      { id: 'A', text: 'Thực hiện chính sách "thắt lưng buộc bụng", thắt chặt tiền tệ và giảm chi tiêu công để bảo vệ an toàn ngân sách quốc gia, mặc cho thị trường tự thực hiện quy trình thanh lọc tự nhiên.', effects: { economy: -30, social: -30, environment: 0 }, explanation: 'Thắt lưng buộc bụng cực đoan đẩy doanh nghiệp vào thế phá sản hàng loạt và an sinh xã hội sụp đổ nhanh hơn.' },
+      { id: 'B', text: 'Sử dụng các công cụ điều tiết vĩ mô: Thực hiện chính sách tiền tệ và tài khóa chủ động, linh hoạt (như giảm thuế, khoanh nợ, kích cầu đầu tư công) để giữ vững ổn định vĩ mô, đồng thời hỗ trợ an sinh xã hội cho người lao động.', effects: { economy: 20, social: 20, environment: 0 }, explanation: 'Nhà nước sử dụng chính sách tài khóa và tiền tệ chủ động để giải cứu thị trường, ổn định vĩ mô và duy trì an sinh.' },
+      { id: 'C', text: 'Ban hành lệnh khẩn cấp áp đặt trần giá sỉ cho mọi loại hàng hóa và tạm thời cấm các doanh nghiệp sa thải lao động để bảo vệ tuyệt đối đời sống nhân dân trong khủng hoảng.', effects: { economy: -40, social: -20, environment: 0 }, explanation: 'Sử dụng mệnh lệnh hành chính triệt tiêu khả năng cân đối chi phí của doanh nghiệp, khiến họ sụp đổ nhanh hơn.' }
     ]
   }
 ];
@@ -119,7 +119,7 @@ function generateRoomCode() {
 function createDefaultTeams(teamNames) {
   return teamNames
     .filter(Boolean)
-    .slice(0, 6)
+    .slice(0, 10)
     .map((name, index) => ({
       id: `team-${index + 1}`,
       name: name.trim(),
@@ -313,13 +313,20 @@ function startRound(room, roundNumber) {
   broadcastRoom(room);
 }
 
+function getSustainableScore(score) {
+  const { economy, social, environment } = score;
+  const max = Math.max(economy, social, environment);
+  const min = Math.min(economy, social, environment);
+  return (economy + social + environment) - (max - min);
+}
+
 function finishGame(room) {
   room.status = 'finished';
   clearRoundTimer(room);
   const ranked = [...room.teams].sort((a, b) => {
-    const totalA = a.score.economy + a.score.social + a.score.environment;
-    const totalB = b.score.economy + b.score.social + b.score.environment;
-    return totalB - totalA;
+    const scoreA = getSustainableScore(a.score);
+    const scoreB = getSustainableScore(b.score);
+    return scoreB - scoreA;
   });
   room.roundResult = {
     roundNumber: room.currentRound,
@@ -407,6 +414,17 @@ io.on('connection', (socket) => {
   socket.on('host:start-game', ({ roomCode }) => {
     const room = rooms.get((roomCode || '').toUpperCase());
     if (!room || room.hostId !== socket.id) return;
+    
+    // Kiểm tra phải có ít nhất 2 nhóm có người chơi
+    const activeTeams = room.teams.filter((team) => {
+      return room.players.some((player) => player.teamId === team.id);
+    });
+
+    if (activeTeams.length < 2) {
+      socket.emit('error', { message: 'Không thể bắt đầu trò chơi. Phải có ít nhất 2 nhóm có người chơi tham gia.' });
+      return;
+    }
+    
     startRound(room, 1);
   });
 
