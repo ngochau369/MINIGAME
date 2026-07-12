@@ -1126,3 +1126,30 @@ button.btn-success:active {
   height: 130px;
   display: block;
 }
+
+.btn-guide-header {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border-gold-dim);
+  color: var(--gold);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: var(--transition-smooth);
+}
+
+.btn-guide-header:hover {
+  background: var(--bg-card);
+  border-color: var(--gold);
+  color: var(--gold-hover);
+  transform: translateY(-1px);
+}
+
+.btn-guide-header:active {
+  transform: translateY(0) scale(0.98);
+}

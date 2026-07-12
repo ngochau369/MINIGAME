@@ -20,6 +20,9 @@
             <h1>Quyết Sách Đổi Mới</h1>
             <p>Đấu trường lý luận kinh tế & đổi mới • <i>Ý chí Cách mạng - Sức mạnh Tri thức</i></p>
           </div>
+          <button type="button" id="guide-btn" class="btn-guide-header">
+            📖 Hướng dẫn
+          </button>
         </div>
       </header>
 
@@ -84,13 +87,6 @@
               </div>
               <div class="status-info">
                 <p>Trạng thái: <span id="room-status" class="status-text">Đang đợi</span></p>
-              </div>
-              <div id="host-qr-container" class="host-qr-container hidden">
-                <div class="qr-title">Quét QR để tham gia nhanh:</div>
-                <div class="qr-code-wrapper">
-                  <img id="host-qr-image" src="" alt="Mã QR phòng chơi" />
-                </div>
-              </div>
               <div id="host-controls" class="hidden">
                 <button id="start-game-btn" class="btn-success">Bắt đầu trò chơi</button>
                 <button id="next-round-btn" class="btn-primary hidden">Vòng tiếp theo</button>
@@ -165,6 +161,47 @@
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fminigame-nu-black.vercel.app%2F" alt="QR Code Trang chủ" style="width: 250px; height: 250px; display: block;" />
           </div>
           <p class="modal-info">Quét mã QR để truy cập nhanh vào trò chơi <strong>Quyết Sách Đổi Mới</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Guide Modal -->
+    <div id="guide-modal" class="modal-backdrop hidden">
+      <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+          <h3>Hướng Dẫn Trò Chơi</h3>
+          <button type="button" id="close-guide-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body" style="align-items: flex-start; text-align: left; max-height: 70vh; overflow-y: auto; line-height: 1.6; font-size: 0.95rem; gap: 14px; padding: 24px;">
+          <h4 style="color: var(--gold); font-family: var(--font-heading); text-transform: uppercase; font-size: 1.1rem; border-bottom: 1px solid var(--border-gold-dim); padding-bottom: 6px; width: 100%; margin-bottom: 6px;">HƯỚNG DẪN NGƯỜI CHƠI</h4>
+          
+          <p><strong>🎮 Bối cảnh:</strong> Bạn là Ban Cố vấn Kinh tế của một quốc gia giả định có xuất phát điểm tương tự Việt Nam năm 1986. Nhiệm vụ của nhóm là đưa ra các quyết sách phát triển đất nước theo định hướng Kinh tế thị trường định hướng xã hội chủ nghĩa.</p>
+          
+          <p><strong>👥 Tham gia trò chơi:</strong></p>
+          <ul style="margin-left: 20px; list-style-type: square; margin-bottom: 6px;">
+            <li>Mỗi nhóm tối đa 05 thành viên.</li>
+            <li>Tham gia bằng Mã phòng (Room Code) hoặc QR Code.</li>
+            <li>Mỗi nhóm thảo luận và thống nhất 01 đáp án cho mỗi vòng.</li>
+          </ul>
+          
+          <p><strong>📊 Chỉ số quốc gia:</strong> Mỗi đội bắt đầu với 50 điểm cho mỗi chỉ số:</p>
+          <ul style="margin-left: 20px; list-style-type: none; margin-bottom: 6px; display: flex; flex-direction: column; gap: 6px;">
+            <li>🟡 <strong>Kinh tế:</strong> Đại diện cho tăng trưởng và sức mạnh kinh tế.</li>
+            <li>🔴 <strong>An sinh xã hội:</strong> Đại diện cho công bằng và chất lượng cuộc sống.</li>
+            <li>⚪ <strong>Môi trường:</strong> Đại diện cho phát triển bền vững.</li>
+          </ul>
+          <p style="font-style: italic; font-size: 0.88rem; color: var(--text-muted);">* Mỗi quyết định sẽ làm tăng hoặc giảm một hoặc nhiều chỉ số.</p>
+          
+          <p><strong>⚡ Cách chơi:</strong></p>
+          <ul style="margin-left: 20px; list-style-type: decimal; margin-bottom: 6px;">
+            <li>Trò chơi gồm 10 vòng.</li>
+            <li>Mỗi vòng Host sẽ đưa ra 01 tình huống kinh tế - xã hội.</li>
+            <li>Các đội có 30 giây để thảo luận.</li>
+            <li>Sau khi hết thời gian, mỗi đội chọn A, B hoặc C.</li>
+            <li>Hệ thống sẽ cập nhật điểm và bảng xếp hạng ngay sau mỗi vòng.</li>
+          </ul>
+          
+          <p><strong>🎯 Mục tiêu:</strong> Mục tiêu không phải là đạt điểm Kinh tế cao nhất, mà là phát triển đất nước một cách cân bằng giữa: <strong>Kinh tế - An sinh xã hội - Môi trường</strong>. Đây chính là mục tiêu của nền Kinh tế thị trường định hướng xã hội chủ nghĩa.</p>
         </div>
       </div>
     </div>

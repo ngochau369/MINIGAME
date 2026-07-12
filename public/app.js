@@ -40,14 +40,11 @@ const els = {
   lobbyCard: document.getElementById('lobby-card'),
   lobbyPlayersList: document.getElementById('lobby-players-list'),
   timerProgressBar: document.getElementById('timer-progress-bar'),
-
-  // QR elements
-  scanQrBtn: document.getElementById('scan-qr-btn'),
-  qrScanModal: document.getElementById('qr-scan-modal'),
-  closeQrModalBtn: document.getElementById('close-qr-modal-btn'),
-  hostQrContainer: document.getElementById('host-qr-container'),
-  hostQrImage: document.getElementById('host-qr-image'),
-  roomCodeInput: document.getElementById('room-code')
+  // QR and Guide elements
+  roomCodeInput: document.getElementById('room-code'),
+  guideBtn: document.getElementById('guide-btn'),
+  guideModal: document.getElementById('guide-modal'),
+  closeGuideBtn: document.getElementById('close-guide-btn')
 };
 
 function setMessage(text) {
@@ -129,19 +126,7 @@ function renderRoom() {
   const isHost = state.role === 'host';
   els.hostControls.classList.toggle('hidden', !isHost);
 
-  // Generate QR Code for Host room to display in lobby
-  if (els.hostQrContainer && els.hostQrImage) {
-    if (isHost && state.room.status === 'lobby') {
-      els.hostQrContainer.classList.remove('hidden');
-      const joinUrl = `https://minigame-nu-black.vercel.app/`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(joinUrl)}`;
-      if (els.hostQrImage.getAttribute('src') !== qrApiUrl) {
-        els.hostQrImage.setAttribute('src', qrApiUrl);
-      }
-    } else {
-      els.hostQrContainer.classList.add('hidden');
-    }
-  }
+
 
   if (isHost) {
     const showStart = state.room.status === 'lobby';
@@ -376,6 +361,24 @@ if (closeWebsiteQrBtn && websiteQrModal) {
   websiteQrModal.addEventListener('click', (e) => {
     if (e.target === websiteQrModal) {
       websiteQrModal.classList.add('hidden');
+    }
+  });
+}
+
+// Guide Modal Event Listeners
+if (els.guideBtn && els.guideModal) {
+  els.guideBtn.addEventListener('click', () => {
+    els.guideModal.classList.remove('hidden');
+  });
+}
+
+if (els.closeGuideBtn && els.guideModal) {
+  els.closeGuideBtn.addEventListener('click', () => {
+    els.guideModal.classList.add('hidden');
+  });
+  els.guideModal.addEventListener('click', (e) => {
+    if (e.target === els.guideModal) {
+      els.guideModal.classList.add('hidden');
     }
   });
 }
