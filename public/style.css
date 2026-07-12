@@ -637,6 +637,7 @@ button.btn-success:active {
 .score-row.leader {
   border-color: var(--border-gold-dim);
   background: #201a1a;
+  padding-right: 48px;
 }
 
 .score-row.leader::before {
