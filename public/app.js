@@ -337,8 +337,12 @@ function renderRoom() {
 
 function populateTeamOptions(room = state.room || state.previewRoom) {
   if (!room || !room.teams) return;
-  const options = room.teams.map((team) => `<option value="${team.id}" ${state.player?.teamId === team.id ? 'selected' : ''}>${team.name}</option>`).join('');
-  els.teamSelect.innerHTML = `<option value="" disabled>-- Chọn nhóm --</option>` + options;
+  const hasSelected = room.teams.some(team => state.player?.teamId === team.id);
+  const options = room.teams.map((team, index) => {
+    const isSelected = hasSelected ? (state.player?.teamId === team.id) : (index === 0);
+    return `<option value="${team.id}" ${isSelected ? 'selected' : ''}>${team.name}</option>`;
+  }).join('');
+  els.teamSelect.innerHTML = options;
 }
 
 // Bind tabs click event listeners
@@ -383,110 +387,6 @@ document.getElementById('room-code').addEventListener('input', (event) => {
   }
 });
 
-// QR Code Scanner Logic
-let html5QrCode = null;
-
-function closeQrModal() {
-  if (els.qrScanModal) {
-    els.qrScanModal.classList.add('hidden');
-  }
-  if (html5QrCode) {
-    if (html5QrCode.isScanning) {
-      html5QrCode.stop().then(() => {
-        html5QrCode = null;
-      }).catch((err) => {
-        console.error("Lỗi khi dừng camera:", err);
-        html5QrCode = null;
-      });
-    } else {
-      html5QrCode = null;
-    }
-  }
-}
-
-function handleQrCodeSuccess(decodedText) {
-  let code = decodedText.trim();
-  
-  // Kiểm tra xem có phải là đường dẫn URL không
-  try {
-    if (code.startsWith('http://') || code.startsWith('https://')) {
-      const url = new URL(code);
-      const roomParam = url.searchParams.get('room');
-      if (roomParam) {
-        code = roomParam;
-      } else {
-        // Nếu không có param room, thử lấy path cuối hoặc phần cuối của URL
-        const parts = url.pathname.split('/');
-        const lastPart = parts[parts.length - 1];
-        if (lastPart && lastPart.length >= 3 && lastPart.length <= 6) {
-          code = lastPart;
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Lỗi parse URL từ QR:", e);
-  }
-
-  code = code.toUpperCase();
-  if (code.length >= 3) {
-    if (els.roomCodeInput) {
-      els.roomCodeInput.value = code;
-    }
-    closeQrModal();
-    socket.emit('player:preview-room', { roomCode: code });
-    setMessage(`Đã quét được mã phòng: ${code}. Vui lòng chọn nhóm.`);
-  } else {
-    setMessage(`Lỗi: Mã QR đã quét (${code}) không phải mã phòng hợp lệ.`);
-  }
-}
-
-if (els.scanQrBtn) {
-  els.scanQrBtn.addEventListener('click', () => {
-    if (els.qrScanModal) {
-      els.qrScanModal.classList.remove('hidden');
-    }
-    
-    // Khởi tạo và chạy scanner
-    try {
-      html5QrCode = new Html5Qrcode("qr-reader");
-      const config = { fps: 15, qrbox: { width: 220, height: 220 } };
-      
-      html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          handleQrCodeSuccess(decodedText);
-        },
-        (errorMessage) => {
-          // Chỉ là log quét liên tục, không cần bắn alert hay log console nhiều gây chậm ứng dụng
-        }
-      ).catch((err) => {
-        console.error("Lỗi khởi động camera:", err);
-        setMessage("Lỗi: Không thể truy cập Camera. Hãy cấp quyền hoặc sử dụng camera khác.");
-        closeQrModal();
-      });
-    } catch (e) {
-      console.error(e);
-      setMessage("Lỗi: Không thể khởi chạy trình quét QR.");
-      closeQrModal();
-    }
-  });
-}
-
-if (els.closeQrModalBtn) {
-  els.closeQrModalBtn.addEventListener('click', () => {
-    closeQrModal();
-  });
-}
-
-// Đóng modal khi click ra ngoài
-if (els.qrScanModal) {
-  els.qrScanModal.addEventListener('click', (e) => {
-    if (e.target === els.qrScanModal) {
-      closeQrModal();
-    }
-  });
-}
 
 els.playerForm.addEventListener('submit', (event) => {
   event.preventDefault();
