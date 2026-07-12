@@ -133,7 +133,7 @@ function renderRoom() {
   if (els.hostQrContainer && els.hostQrImage) {
     if (isHost && state.room.status === 'lobby') {
       els.hostQrContainer.classList.remove('hidden');
-      const joinUrl = `${window.location.origin}/?room=${state.room.id}`;
+      const joinUrl = `https://minigame-hau4.vercel.app/?room=${state.room.id}`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(joinUrl)}`;
       if (els.hostQrImage.getAttribute('src') !== qrApiUrl) {
         els.hostQrImage.setAttribute('src', qrApiUrl);
