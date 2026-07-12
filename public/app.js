@@ -33,7 +33,7 @@ const els = {
   messageBox: document.getElementById('message-box'),
   teamSelect: document.getElementById('team-select'),
   homeButton: document.getElementById('host-home-btn'),
-  
+
   // New elements
   tabPlayerBtn: document.getElementById('tab-player-btn'),
   tabHostBtn: document.getElementById('tab-host-btn'),
@@ -50,7 +50,7 @@ function switchView(role) {
   state.role = role;
   els.hostForm.classList.toggle('hidden', role !== 'host');
   els.playerForm.classList.toggle('hidden', role !== 'player');
-  
+
   if (els.tabPlayerBtn && els.tabHostBtn) {
     els.tabPlayerBtn.classList.toggle('active', role === 'player');
     els.tabHostBtn.classList.toggle('active', role === 'host');
@@ -110,23 +110,23 @@ function renderRoom() {
   els.roomView.classList.remove('hidden');
   els.roomTitle.textContent = state.room.name;
   els.roomCodeDisplay.textContent = state.room.id;
-  
+
   // Translate status text for beautiful UI
   let statusText = 'Đang chờ';
   if (state.room.status === 'playing') statusText = 'Đang diễn ra';
   if (state.room.status === 'round-result') statusText = 'Kết quả vòng';
   if (state.room.status === 'finished') statusText = 'Hoàn thành';
   els.roomStatus.textContent = statusText;
-  
+
   const isHost = state.role === 'host';
   els.hostControls.classList.toggle('hidden', !isHost);
-  
+
   if (isHost) {
     const showStart = state.room.status === 'lobby';
     const showNext = state.room.status === 'round-result';
     els.startGameBtn.classList.toggle('hidden', !showStart);
     els.nextRoundBtn.classList.toggle('hidden', !showNext);
-    
+
     if (showStart) {
       const activeTeams = (state.room.teams || []).filter((team) => {
         return (state.room.players || []).some((player) => player.teamId === team.id);
@@ -149,7 +149,7 @@ function renderRoom() {
 
   els.scoreboardPanel.classList.toggle('hidden', !isHost);
   els.scoreboardNotice.classList.toggle('hidden', isHost);
-  
+
   if (!isHost) {
     els.scoreboardNotice.textContent = 'Chỉ host mới có quyền xem bảng điểm trên màn hình chung.';
   } else {
@@ -157,7 +157,7 @@ function renderRoom() {
     const visibleTeams = (state.room.teams || []).filter((team) => {
       return (state.room.players || []).some((player) => player.teamId === team.id);
     });
-    
+
     // Sort teams by total score (and push eliminated ones to the bottom)
     const sortedTeams = [...visibleTeams].sort((a, b) => {
       if (a.eliminated && !b.eliminated) return 1;
@@ -171,18 +171,18 @@ function renderRoom() {
       const total = team.score.economy + team.score.social + team.score.environment;
       const isEliminated = team.eliminated;
       const isLeader = index === 0;
-      
+
       const econPct = Math.min(100, Math.max(0, team.score.economy));
       const socPct = Math.min(100, Math.max(0, team.score.social));
       const envPct = Math.min(100, Math.max(0, team.score.environment));
-      
+
       return `
         <div class="score-row ${isEliminated ? 'eliminated' : ''} ${isLeader ? 'leader' : ''}">
           <div class="score-team-meta">
             <div class="score-team-main">
               <div class="score-rank-badge">${index + 1}</div>
               <div class="score-team-text">
-                <span class="team-name-header">${team.name}${isEliminated ? ' 💀' : ''}</span>
+                <span class="team-name-header">${team.name}${isEliminated ? ' <span class="eliminated-tag">Bị loại</span>' : ''}</span>
                 <span class="team-subtext">${isEliminated ? 'Bị loại' : 'Đang tranh tài'}</span>
               </div>
             </div>
@@ -214,7 +214,7 @@ function renderRoom() {
         </div>
       `;
     });
-    
+
     els.scoreboard.innerHTML = table.join('') || '<p class="empty-lobby-text">Chưa có nhóm nào có thành viên tham gia</p>';
   }
 
@@ -226,14 +226,14 @@ function renderRoom() {
     els.roundCard.classList.remove('hidden');
     els.roundTitle.textContent = state.room.round.title;
     els.roundScenario.textContent = state.room.round.scenario;
-    
+
     const isRoundResult = state.room.status === 'round-result';
     const myTeam = state.room.teams.find((team) => team.id === state.player?.teamId);
     const myTeamAnswers = state.room.playerAnswers?.[myTeam?.id] || {};
     const playerAnswer = myTeamAnswers?.[state.player?.id];
     const playerAnswered = typeof playerAnswer === 'string';
     const canAnswer = state.role === 'player' && state.player && state.player.teamId && !playerAnswered && !isRoundResult && !myTeam?.eliminated;
-    
+
     els.optionsList.innerHTML = state.room.round.options.map((option) => {
       const isSelected = playerAnswer === option.id;
       const isCorrect = state.room.roundCorrectAnswer === option.id;
@@ -251,7 +251,14 @@ function renderRoom() {
       const finalTeams = (state.room.teams || []).map((team) => {
         const answer = state.room.roundAnswers?.[team.id] || 'chưa trả lời';
         const correct = state.room.roundCorrectAnswer ? (answer === state.room.roundCorrectAnswer) : false;
-        return `${team.name}: ${answer}${answer !== 'chưa trả lời' ? (correct ? ' ✓ đúng' : ' ✗ sai') : ''}`;
+        const isAnswered = answer !== 'chưa trả lời' && answer !== 'không có';
+        let feedback = '';
+        if (isAnswered) {
+          feedback = correct
+            ? ' <span class="indicator-correct">đúng</span>'
+            : ' <span class="indicator-incorrect">sai</span>';
+        }
+        return `${team.name}: <span class="badge-answer">${answer}</span>${feedback}`;
       });
       els.roundStatus.innerHTML = finalTeams.length ? `Kết quả: ${finalTeams.join(' • ')}` : 'Chưa có nhóm nào chọn đáp án.';
     } else {
@@ -275,7 +282,7 @@ function renderRoom() {
     const timeLeft = typeof state.room.serverTimeLeft === 'number'
       ? state.room.serverTimeLeft
       : Math.max(0, Math.ceil((duration * 1000 - (Date.now() - state.room.roundStartedAt)) / 1000));
-      
+
     els.roundTimer.textContent = `Thời gian còn lại: ${timeLeft}s`;
     if (els.timerProgressBar) {
       const percentage = (timeLeft / duration) * 100;
@@ -290,13 +297,13 @@ function renderRoom() {
   // Display Result Card
   if (state.room.status === 'round-result' && state.room.roundResult) {
     els.resultCard.classList.remove('hidden');
-    
+
     // Tìm phương án đúng của vòng hiện tại để hiển thị phần giải thích / bẫy tư duy
     const correctOpt = state.room.round?.options?.find(opt => opt.id === state.room.roundCorrectAnswer);
     const explanationHtml = correctOpt && correctOpt.explanation
       ? `<div class="explanation-box"><strong>💡 Phân tích & Bẫy tư duy:</strong> ${correctOpt.explanation}</div>`
       : '';
-      
+
     els.resultSummary.innerHTML = `
       <div><strong>${state.room.roundResult.title}:</strong> ${state.room.roundResult.summary}</div>
       ${explanationHtml}
@@ -332,6 +339,11 @@ els.homeButton.addEventListener('click', () => {
 
 els.hostForm.addEventListener('submit', (event) => {
   event.preventDefault();
+  const password = document.getElementById('host-password').value;
+  if (password !== '1231231231') {
+    setMessage('Lỗi: Mật khẩu Host không chính xác.');
+    return;
+  }
   const payload = {
     roomName: document.getElementById('room-name').value,
     teamNames: document.getElementById('team-names').value.split(',').map((item) => item.trim()),
@@ -426,7 +438,7 @@ socket.on('round:tick', ({ timeLeft }) => {
   if (!state.room) return;
   state.room.serverTimeLeft = timeLeft;
   els.roundTimer.textContent = `Thời gian còn lại: ${timeLeft}s`;
-  
+
   if (els.timerProgressBar) {
     const duration = state.room.roundDuration || 30;
     const percentage = (timeLeft / duration) * 100;
@@ -442,7 +454,7 @@ socket.on('room:deleted', () => {
 });
 
 socket.on('game:finished', ({ winner }) => {
-  const conclusionText = "\n\n💡 Ý nghĩa trò chơi: Nếu chỉ chọn tăng trưởng Kinh tế mà bỏ qua An sinh và Môi trường thì quốc gia sẽ sụp đổ. Đó là lý do vì sao bắt buộc phải chọn con đường phát triển bền vững, gắn tăng trưởng Kinh tế với tiến bộ, công bằng Xã hội và bảo vệ Môi trường (Kinh tế thị trường Định hướng XHCN)!";
+  const conclusionText = "\n\nÝ nghĩa trò chơi: Nếu chỉ chọn tăng trưởng Kinh tế mà bỏ qua An sinh và Môi trường thì quốc gia sẽ sụp đổ. Đó là lý do vì sao bắt buộc phải chọn con đường phát triển bền vững, gắn tăng trưởng Kinh tế với tiến bộ, công bằng Xã hội và bảo vệ Môi trường (Kinh tế thị trường Định hướng XHCN)!";
   setMessage(`Trò chơi đã kết thúc! Xin chúc mừng nhóm ${winner?.name || 'N/A'} đã xuất sắc giành chiến thắng chung cuộc!${conclusionText}`);
 });
 

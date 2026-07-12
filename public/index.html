@@ -4,20 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quyết Sách Đổi Mới</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <div class="app-shell">
       <header>
         <div class="title-row">
-          <button id="host-home-btn" class="title-icon" aria-label="Về trang host" title="Về trang Host">🏠</button>
+          <button id="host-home-btn" class="title-icon" aria-label="Về trang đại hội" title="Về Đại hội">
+            <svg class="icon-star" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" />
+            </svg>
+          </button>
           <div class="brand">
             <h1>Quyết Sách Đổi Mới</h1>
-            <p>Trò chơi thảo luận kinh tế & đổi mới dành cho lớp học</p>
+            <p>Đấu trường lý luận kinh tế & đổi mới • <i>Ý chí Cách mạng - Sức mạnh Tri thức</i></p>
           </div>
         </div>
       </header>
@@ -25,7 +26,7 @@
       <main class="grid">
         <section class="panel form-panel">
           <div id="setup-view">
-            <h2>Hệ Thống Phòng</h2>
+            <h2><svg class="icon-star-inline" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg> Thiết lập Đại hội</h2>
             
             <!-- Sleek Switcher Tabs -->
             <div class="setup-tabs">
@@ -46,6 +47,10 @@
               <div class="form-group">
                 <label for="round-duration">Thời gian mỗi vòng (giây)</label>
                 <input id="round-duration" type="number" value="30" min="10" />
+              </div>
+              <div class="form-group">
+                <label for="host-password">Mật khẩu Host (Admin)</label>
+                <input id="host-password" type="password" placeholder="Nhập mật khẩu để tạo phòng..." required />
               </div>
               <button type="submit" class="btn-primary">Tạo phòng</button>
             </form>
@@ -107,14 +112,21 @@
             <!-- Result Card -->
             <div id="result-card" class="card hidden result-card">
               <div class="result-header">
-                <h3>📢 Kết quả vòng đấu</h3>
+                <svg class="header-icon star-glow" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" />
+                </svg>
+                <h3>Nghị quyết Vòng đấu</h3>
               </div>
               <p id="result-summary"></p>
             </div>
 
-            <!-- Lobby Players Card (New) -->
             <div id="lobby-card" class="card">
-              <h3>👥 Thành viên trong phòng</h3>
+              <div class="lobby-header-row">
+                <svg class="header-icon star-glow" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" />
+                </svg>
+                <h3>Đồng chí trong Ban đại hội</h3>
+              </div>
               <div id="lobby-players-list" class="lobby-players-grid">
                 <p class="empty-lobby-text">Chưa có người chơi nào tham gia</p>
               </div>
@@ -125,11 +137,11 @@
 
         <!-- Scoreboard Panel -->
         <section class="panel scoreboard-panel" id="scoreboard-panel">
-          <h2>Bảng Xếp Hạng</h2>
+          <h2><svg class="icon-star-inline" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg> Bảng Vinh Quang Cách Mạng</h2>
           <div id="scoreboard" class="scoreboard-container"></div>
           <div id="scoreboard-notice" class="scoreboard-notice hidden"></div>
           <div class="console-log-wrapper">
-            <h3>Nhật ký hệ thống</h3>
+            <h3>Báo cáo lý luận cách mạng</h3>
             <div id="message-box" class="message-box">Hệ thống sẵn sàng</div>
           </div>
         </section>
