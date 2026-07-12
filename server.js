@@ -345,15 +345,15 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  socket.on('host:create-room', ({ roomName, teamNames, roundDuration }) => {
+  socket.on('host:create-room', ({ roomName, roundDuration }) => {
     const roomCode = generateRoomCode();
     const room = {
       id: roomCode,
-      name: roomName || 'Phòng Quýêt sách đổi mới',
+      name: roomName || 'Phòng Quyết sách đổi mới',
       hostId: socket.id,
       hostName: 'Host',
       status: 'lobby',
-      teams: createDefaultTeams(teamNames || ['Nhóm 1', 'Nhóm 2', 'Nhóm 3', 'Nhóm 4']),
+      teams: [], // Individual players will be dynamically added as "teams" here
       players: [],
       currentRound: 0,
       roundDuration: Number(roundDuration) || 30,
@@ -383,7 +383,7 @@ io.on('connection', (socket) => {
     socket.emit('room:preview', { room: serializeRoom(room) });
   });
 
-  socket.on('player:join-room', ({ roomCode, name, teamId }) => {
+  socket.on('player:join-room', ({ roomCode, name }) => {
     const code = (roomCode || '').toUpperCase();
     const room = rooms.get(code);
     if (!room) {
@@ -396,17 +396,30 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const selectedTeam = room.teams.find((team) => team.id === teamId);
+    const playerName = name || `Đồng chí ${room.players.length + 1}`;
+    const playerTeamId = socket.id;
+
+    // Create an individual team representing this player
+    const playerTeam = {
+      id: playerTeamId,
+      name: playerName,
+      score: { economy: 50, social: 50, environment: 50 },
+      answer: null,
+      eliminated: false
+    };
+    room.teams.push(playerTeam);
+
     const player = {
       id: socket.id,
-      name: name || `Người chơi ${room.players.length + 1}`,
-      teamId: selectedTeam ? selectedTeam.id : room.teams[0]?.id || null
+      name: playerName,
+      teamId: playerTeamId
     };
     room.players.push(player);
+
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.role = 'player';
-    socket.data.teamId = player.teamId;
+    socket.data.teamId = playerTeamId;
     socket.emit('room:joined', { room: serializeRoom(room), player });
     broadcastRoom(room);
   });
@@ -415,13 +428,9 @@ io.on('connection', (socket) => {
     const room = rooms.get((roomCode || '').toUpperCase());
     if (!room || room.hostId !== socket.id) return;
     
-    // Kiểm tra phải có ít nhất 2 nhóm có người chơi
-    const activeTeams = room.teams.filter((team) => {
-      return room.players.some((player) => player.teamId === team.id);
-    });
-
-    if (activeTeams.length < 2) {
-      socket.emit('error', { message: 'Không thể bắt đầu trò chơi. Phải có ít nhất 2 nhóm có người chơi tham gia.' });
+    // Yêu cầu có ít nhất 2 người chơi tham gia
+    if (room.players.length < 2) {
+      socket.emit('error', { message: 'Không thể bắt đầu trò chơi. Phải có ít nhất 2 người chơi tham gia.' });
       return;
     }
     
@@ -470,6 +479,7 @@ io.on('connection', (socket) => {
     }
 
     room.players = room.players.filter((player) => player.id !== socket.id);
+    room.teams = room.teams.filter((team) => team.id !== socket.id);
     broadcastRoom(room);
   });
 });

@@ -43,10 +43,7 @@
                 <label for="room-name">Tên phòng</label>
                 <input id="room-name" placeholder="Ví dụ: Lớp Kinh tế K8" />
               </div>
-              <div class="form-group">
-                <label for="team-names">Tên các nhóm (phân cách bằng dấu phẩy)</label>
-                <input id="team-names" placeholder="Nhóm A, Nhóm B, Nhóm C, Nhóm D" value="Nhóm 1, Nhóm 2, Nhóm 3, Nhóm 4" />
-              </div>
+
               <div class="form-group">
                 <label for="round-duration">Thời gian mỗi vòng (giây)</label>
                 <input id="round-duration" type="number" value="30" min="10" />
@@ -68,12 +65,7 @@
                 <label for="room-code">Mã phòng (4 ký tự)</label>
                 <input id="room-code" placeholder="VD: ABCD" maxlength="4" style="text-transform: uppercase;" required />
               </div>
-              <div class="form-group">
-                <label for="team-select">Chọn nhóm</label>
-                <select id="team-select">
-                  <option value="" disabled selected>Vui lòng nhập mã phòng hợp lệ...</option>
-                </select>
-              </div>
+
               <button type="submit" class="btn-primary">Vào phòng</button>
             </form>
           </div>
@@ -175,16 +167,15 @@
         <div class="modal-body" style="align-items: flex-start; text-align: left; max-height: 70vh; overflow-y: auto; line-height: 1.6; font-size: 0.95rem; gap: 14px; padding: 24px;">
           <h4 style="color: var(--gold); font-family: var(--font-heading); text-transform: uppercase; font-size: 1.1rem; border-bottom: 1px solid var(--border-gold-dim); padding-bottom: 6px; width: 100%; margin-bottom: 6px;">HƯỚNG DẪN NGƯỜI CHƠI</h4>
           
-          <p><strong>🎮 Bối cảnh:</strong> Bạn là Ban Cố vấn Kinh tế của một quốc gia giả định có xuất phát điểm tương tự Việt Nam năm 1986. Nhiệm vụ của nhóm là đưa ra các quyết sách phát triển đất nước theo định hướng Kinh tế thị trường định hướng xã hội chủ nghĩa.</p>
+          <p><strong>🎮 Bối cảnh:</strong> Bạn là Ban Cố vấn Kinh tế của một quốc gia giả định có xuất phát điểm tương tự Việt Nam năm 1986. Nhiệm vụ của bạn là đưa ra các quyết sách phát triển đất nước theo định hướng Kinh tế thị trường định hướng xã hội chủ nghĩa.</p>
           
           <p><strong>👥 Tham gia trò chơi:</strong></p>
           <ul style="margin-left: 20px; list-style-type: square; margin-bottom: 6px;">
-            <li>Mỗi nhóm tối đa 05 thành viên.</li>
-            <li>Tham gia bằng Mã phòng (Room Code) hoặc QR Code.</li>
-            <li>Mỗi nhóm thảo luận và thống nhất 01 đáp án cho mỗi vòng.</li>
+            <li>Người chơi tham gia độc lập, tự chọn quyết sách của riêng mình.</li>
+            <li>Tham gia bằng Mã phòng (Room Code) hoặc quét QR Code.</li>
           </ul>
           
-          <p><strong>📊 Chỉ số quốc gia:</strong> Mỗi đội bắt đầu với 50 điểm cho mỗi chỉ số:</p>
+          <p><strong>📊 Chỉ số quốc gia:</strong> Mỗi người chơi bắt đầu với 50 điểm cho mỗi chỉ số:</p>
           <ul style="margin-left: 20px; list-style-type: none; margin-bottom: 6px; display: flex; flex-direction: column; gap: 6px;">
             <li>🟡 <strong>Kinh tế:</strong> Đại diện cho tăng trưởng và sức mạnh kinh tế.</li>
             <li>🔴 <strong>An sinh xã hội:</strong> Đại diện cho công bằng và chất lượng cuộc sống.</li>
@@ -196,9 +187,9 @@
           <ul style="margin-left: 20px; list-style-type: decimal; margin-bottom: 6px;">
             <li>Trò chơi gồm 10 vòng.</li>
             <li>Mỗi vòng Host sẽ đưa ra 01 tình huống kinh tế - xã hội.</li>
-            <li>Các đội có 30 giây để thảo luận.</li>
-            <li>Sau khi hết thời gian, mỗi đội chọn A, B hoặc C.</li>
-            <li>Hệ thống sẽ cập nhật điểm và bảng xếp hạng ngay sau mỗi vòng.</li>
+            <li>Người chơi có 30 giây để suy nghĩ và đưa ra quyết định.</li>
+            <li>Sau khi hết thời gian, mỗi người chơi chọn A, B hoặc C.</li>
+            <li>Hệ thống sẽ cập nhật điểm và bảng xếp hạng cá nhân ngay sau mỗi vòng.</li>
           </ul>
           
           <p><strong>🎯 Mục tiêu:</strong> Mục tiêu không phải là đạt điểm Kinh tế cao nhất, mà là phát triển đất nước một cách cân bằng giữa: <strong>Kinh tế - An sinh xã hội - Môi trường</strong>. Đây chính là mục tiêu của nền Kinh tế thị trường định hướng xã hội chủ nghĩa.</p>

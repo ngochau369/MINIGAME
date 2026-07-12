@@ -321,7 +321,7 @@ function renderRoom() {
 }
 
 function populateTeamOptions(room = state.room || state.previewRoom) {
-  if (!room || !room.teams) return;
+  if (!els.teamSelect || !room || !room.teams) return;
   const hasSelected = room.teams.some(team => state.player?.teamId === team.id);
   const options = room.teams.map((team, index) => {
     const isSelected = hasSelected ? (state.player?.teamId === team.id) : (index === 0);
@@ -392,7 +392,6 @@ els.hostForm.addEventListener('submit', (event) => {
   }
   const payload = {
     roomName: document.getElementById('room-name').value,
-    teamNames: document.getElementById('team-names').value.split(',').map((item) => item.trim()),
     roundDuration: document.getElementById('round-duration').value
   };
   socket.emit('host:create-room', payload);
@@ -412,8 +411,7 @@ els.playerForm.addEventListener('submit', (event) => {
   event.preventDefault();
   const payload = {
     roomCode: document.getElementById('room-code').value,
-    name: document.getElementById('player-name').value,
-    teamId: els.teamSelect.value
+    name: document.getElementById('player-name').value
   };
   socket.emit('player:join-room', payload);
   setMessage('Đang xin gia nhập phòng...');
