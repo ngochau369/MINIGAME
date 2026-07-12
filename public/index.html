@@ -153,8 +153,21 @@
         </section>
       </main>
     </div>
-
-
+    <!-- Website QR Code Modal (Logo Star) -->
+    <div id="website-qr-modal" class="modal-backdrop hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Mã QR Trang Trò Chơi</h3>
+          <button type="button" id="close-website-qr-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="qr-code-wrapper">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fminigame-nu-black.vercel.app%2F" alt="QR Code Trang chủ" style="width: 250px; height: 250px; display: block;" />
+          </div>
+          <p class="modal-info">Quét mã QR để truy cập nhanh vào trò chơi <strong>Quyết Sách Đổi Mới</strong></p>
+        </div>
+      </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/app.js?v=3"></script>

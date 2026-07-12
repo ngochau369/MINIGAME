@@ -358,10 +358,27 @@ if (els.tabHostBtn) {
   });
 }
 
-els.homeButton.addEventListener('click', () => {
-  switchView('host');
-  renderRoom();
+els.homeButton.addEventListener('click', (e) => {
+  e.preventDefault();
+  const modal = document.getElementById('website-qr-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+  }
 });
+
+const closeWebsiteQrBtn = document.getElementById('close-website-qr-btn');
+const websiteQrModal = document.getElementById('website-qr-modal');
+
+if (closeWebsiteQrBtn && websiteQrModal) {
+  closeWebsiteQrBtn.addEventListener('click', () => {
+    websiteQrModal.classList.add('hidden');
+  });
+  websiteQrModal.addEventListener('click', (e) => {
+    if (e.target === websiteQrModal) {
+      websiteQrModal.classList.add('hidden');
+    }
+  });
+}
 
 els.hostForm.addEventListener('submit', (event) => {
   event.preventDefault();
