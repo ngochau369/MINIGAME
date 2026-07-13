@@ -184,28 +184,91 @@ function allPlayersAnswered(room) {
   });
 }
 
-function serializeRoom(room) {
+// Tóm tắt playerAnswers thành {teamId: {A:n, B:n, C:n}} để giảm payload
+function summarizeAnswers(playerAnswers) {
+  const summary = {};
+  for (const teamId in playerAnswers) {
+    const counts = { A: 0, B: 0, C: 0 };
+    for (const ans of Object.values(playerAnswers[teamId])) {
+      if (counts[ans] !== undefined) counts[ans]++;
+    }
+    summary[teamId] = counts;
+  }
+  return summary;
+}
+
+// Số lượng player đã trả lời trong mỗi team
+function countAnswered(playerAnswers) {
+  const result = {};
+  for (const teamId in playerAnswers) {
+    result[teamId] = Object.keys(playerAnswers[teamId]).length;
+  }
+  return result;
+}
+
+function serializeRoom(room, forSocket) {
+  // Chỉ gửi round data khi cần (lần đầu join hoặc khi round thay đổi)
+  const includeFullRound = forSocket === 'full';
   return {
     id: room.id,
     name: room.name,
     hostId: room.hostId,
     status: room.status,
-    teams: room.teams,
+    // Gửi teams dưới dạng compact: chỉ các field cần thiết
+    teams: room.teams.map(t => ({
+      id: t.id,
+      name: t.name,
+      score: t.score,
+      answer: t.answer,
+      eliminated: t.eliminated,
+      correct: t.correct
+    })),
     players: room.players,
     currentRound: room.currentRound,
     totalRounds: rounds.length,
-    round: room.currentRound > 0 ? rounds[room.currentRound - 1] : null,
+    // Chỉ gửi round data đầy đủ khi join/rejoin; broadcast chỉ gửi roundIndex
+    round: includeFullRound
+      ? (room.currentRound > 0 ? rounds[room.currentRound - 1] : null)
+      : undefined,
+    roundIndex: room.currentRound, // client dùng để cache round data
     roundStartedAt: room.roundStartedAt,
     roundDuration: room.roundDuration,
     roundResult: room.roundResult,
     roundAnswers: room.roundAnswers,
-    playerAnswers: room.playerAnswers || {},
+    // Thay vì gửi toàn bộ playerAnswers (50 keys × n players),
+    // chỉ gửi tóm tắt vote count per option
+    answerSummary: summarizeAnswers(room.playerAnswers || {}),
+    answeredCount: countAnswered(room.playerAnswers || {}),
+    // Gửi myAnswer riêng cho từng client qua emit cá nhân, không qua broadcast
     roundCorrectAnswer: room.roundCorrectAnswer || null
   };
 }
 
+// Broadcast nhẹ: không có round data đầy đủ
 function broadcastRoom(room) {
-  io.to(room.id).emit('room:update', serializeRoom(room));
+  io.to(room.id).emit('room:update', serializeRoom(room, 'broadcast'));
+}
+
+// Gửi full data cho 1 socket (khi join/rejoin)
+function sendFullRoom(socket, room) {
+  const data = serializeRoom(room, 'full');
+  // Đính kèm myAnswer riêng cho player này
+  const player = room.players.find(p => p.id === socket.id);
+  if (player) {
+    data.myAnswer = room.playerAnswers?.[player.teamId]?.[player.id] || null;
+  }
+  socket.emit('room:joined-data', data);
+}
+
+// Debounce broadcast khi nhiều người submit cùng lúc
+const broadcastDebounce = new Map(); // roomId -> timeoutHandle
+
+function debouncedBroadcast(room, delay = 200) {
+  if (broadcastDebounce.has(room.id)) return; // đã có pending broadcast
+  broadcastDebounce.set(room.id, setTimeout(() => {
+    broadcastDebounce.delete(room.id);
+    broadcastRoom(room);
+  }, delay));
 }
 
 function clearRoundTimer(room) {
@@ -335,7 +398,15 @@ function finishGame(room) {
     winner: ranked[0]
   };
   broadcastRoom(room);
-  io.to(room.id).emit('game:finished', { winner: ranked[0], ranking: ranked });
+  // Gửi top 3 và toàn bộ ranking
+  const top3 = ranked.slice(0, 3).map((team, i) => ({
+    rank: i + 1,
+    name: team.name,
+    score: team.score,
+    total: team.score.economy + team.score.social + team.score.environment,
+    sustainable: getSustainableScore(team.score)
+  }));
+  io.to(room.id).emit('game:finished', { winner: ranked[0], ranking: ranked, top3 });
 }
 
 const rooms = new Map();
@@ -362,13 +433,36 @@ io.on('connection', (socket) => {
       playerAnswers: {},
       roundResult: null,
       timerHandle: null,
-      tickHandle: null
+      tickHandle: null,
+      disconnectTimers: {},
+      hostDisconnectTimer: null
     };
     rooms.set(roomCode, room);
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
     socket.data.role = 'host';
-    socket.emit('room:created', { room: serializeRoom(room) });
+    socket.emit('room:created', { room: serializeRoom(room, 'full') });
+    broadcastRoom(room);
+  });
+
+  // Host rejoin sau khi mất kết nối
+  socket.on('host:rejoin-room', ({ roomCode }) => {
+    const code = (roomCode || '').toUpperCase();
+    const room = rooms.get(code);
+    if (!room) {
+      socket.emit('error', { message: 'Không tìm thấy phòng.' });
+      return;
+    }
+    // Hủy timer xóa phòng
+    if (room.hostDisconnectTimer) {
+      clearTimeout(room.hostDisconnectTimer);
+      room.hostDisconnectTimer = null;
+    }
+    room.hostId = socket.id;
+    socket.join(code);
+    socket.data.roomCode = code;
+    socket.data.role = 'host';
+    socket.emit('room:created', { room: serializeRoom(room, 'full') });
     broadcastRoom(room);
   });
 
@@ -383,7 +477,7 @@ io.on('connection', (socket) => {
     socket.emit('room:preview', { room: serializeRoom(room) });
   });
 
-  socket.on('player:join-room', ({ roomCode, name }) => {
+  socket.on('player:join-room', ({ roomCode, name, rejoinToken }) => {
     const code = (roomCode || '').toUpperCase();
     const room = rooms.get(code);
     if (!room) {
@@ -396,32 +490,53 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const playerName = name || `Đồng chí ${room.players.length + 1}`;
-    const playerTeamId = socket.id;
+    // Kiểm tra rejoin: nếu player đã có session trước (dùng rejoinToken = teamId cũ)
+    let existingTeam = null;
+    let existingPlayer = null;
+    if (rejoinToken) {
+      existingTeam = room.teams.find((t) => t.id === rejoinToken);
+      existingPlayer = room.players.find((p) => p.teamId === rejoinToken);
+    }
 
-    // Create an individual team representing this player
-    const playerTeam = {
-      id: playerTeamId,
-      name: playerName,
-      score: { economy: 50, social: 50, environment: 50 },
-      answer: null,
-      eliminated: false
-    };
-    room.teams.push(playerTeam);
+    let player;
+    let playerTeamId;
 
-    const player = {
-      id: socket.id,
-      name: playerName,
-      teamId: playerTeamId
-    };
-    room.players.push(player);
+    if (existingTeam && existingPlayer) {
+      // Rejoin: cập nhật socket id mới vào player cũ
+      playerTeamId = existingTeam.id;
+      existingPlayer.id = socket.id;
+      player = existingPlayer;
+    } else {
+      // Join mới
+      const playerName = name || `Đồng chí ${room.players.length + 1}`;
+      playerTeamId = socket.id;
+
+      const playerTeam = {
+        id: playerTeamId,
+        name: playerName,
+        score: { economy: 50, social: 50, environment: 50 },
+        answer: null,
+        eliminated: false
+      };
+      room.teams.push(playerTeam);
+
+      player = {
+        id: socket.id,
+        name: playerName,
+        teamId: playerTeamId
+      };
+      room.players.push(player);
+    }
 
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.role = 'player';
     socket.data.teamId = playerTeamId;
-    socket.emit('room:joined', { room: serializeRoom(room), player });
-    broadcastRoom(room);
+    // Gửi full data (kể cả round content) cho player này
+    socket.emit('room:joined', { player });
+    sendFullRoom(socket, room);
+    // Broadcast compact update cho các người khác
+    debouncedBroadcast(room, 400);
   });
 
   socket.on('host:start-game', ({ roomCode }) => {
@@ -458,10 +573,20 @@ io.on('connection', (socket) => {
     if (room.playerAnswers?.[teamId]?.[player.id]) return;
 
     recordPlayerAnswer(room, teamId, player.id, answer);
-    broadcastRoom(room);
+
+    // Xác nhận riêng cho player này (không cần broadcast toàn phòng)
+    socket.emit('answer:confirmed', { answer });
 
     if (allPlayersAnswered(room)) {
+      // Hủy debounce pending nếu có, finalize ngay
+      if (broadcastDebounce.has(room.id)) {
+        clearTimeout(broadcastDebounce.get(room.id));
+        broadcastDebounce.delete(room.id);
+      }
       finalizeRound(room.id);
+    } else {
+      // Debounce broadcast vote summary để tránh spam khi nhiều người submit liền nhau
+      debouncedBroadcast(room, 300);
     }
   });
 
@@ -473,14 +598,38 @@ io.on('connection', (socket) => {
     if (!room) return;
 
     if (room.hostId === socket.id) {
-      rooms.delete(roomCode);
-      io.to(roomCode).emit('room:deleted');
+      // Chờ 10s trước khi xóa phòng, cho phép host reconnect
+      room.hostDisconnectTimer = setTimeout(() => {
+        const r = rooms.get(roomCode);
+        if (r && r.hostId === socket.id) {
+          rooms.delete(roomCode);
+          io.to(roomCode).emit('room:deleted');
+        }
+      }, 10000);
       return;
     }
 
-    room.players = room.players.filter((player) => player.id !== socket.id);
-    room.teams = room.teams.filter((team) => team.id !== socket.id);
-    broadcastRoom(room);
+    // Player disconnect: chỉ đánh dấu offline, không xóa ngay
+    // Chờ 15s cho phép player reconnect
+    const disconnectTimer = setTimeout(() => {
+      const r = rooms.get(roomCode);
+      if (!r) return;
+      // Kiểm tra xem player đã reconnect chưa (id đã thay đổi)
+      const stillGone = r.players.find((p) => p.id === socket.id && p.teamId === socket.data.teamId);
+      if (stillGone) {
+        r.players = r.players.filter((p) => p.id !== socket.id);
+        r.teams = r.teams.filter((t) => t.id !== socket.data.teamId);
+        broadcastRoom(r);
+      }
+    }, 15000);
+
+    // Lưu timer để có thể cancel nếu reconnect
+    room.disconnectTimers = room.disconnectTimers || {};
+    // Hủy timer cũ nếu có cho cùng teamId
+    if (room.disconnectTimers[socket.data.teamId]) {
+      clearTimeout(room.disconnectTimers[socket.data.teamId]);
+    }
+    room.disconnectTimers[socket.data.teamId] = disconnectTimer;
   });
 });
 

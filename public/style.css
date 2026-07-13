@@ -1154,3 +1154,291 @@ button.btn-success:active {
 .btn-guide-header:active {
   transform: translateY(0) scale(0.98);
 }
+
+/* ── Podium Modal ─────────────────────────────────────────────────────────── */
+.podium-modal-content {
+  max-width: 680px;
+  width: 100%;
+  overflow: visible;
+  position: relative;
+}
+
+.podium-fireworks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 4px;
+  z-index: 0;
+}
+
+.firework-particle {
+  position: absolute;
+  top: -10px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: fireworkFall linear forwards;
+}
+
+@keyframes fireworkFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.podium-modal-header {
+  position: relative;
+  z-index: 1;
+}
+
+.podium-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.podium-title-wrap h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  color: var(--gold);
+  letter-spacing: 0.03em;
+}
+
+.podium-body {
+  position: relative;
+  z-index: 1;
+  padding: 28px 24px 24px;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.podium-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+/* ── Podium Stage ── */
+.podium-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin: 4px 0 8px;
+}
+
+.podium-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 190px;
+  gap: 6px;
+  animation: podiumRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.podium-slot.podium-rank-1 { animation-delay: 0.05s; }
+.podium-slot.podium-rank-2 { animation-delay: 0.2s; }
+.podium-slot.podium-rank-3 { animation-delay: 0.35s; }
+
+@keyframes podiumRise {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.podium-avatar {
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+}
+
+.podium-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.podium-slot.podium-rank-1 .podium-name {
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+
+.podium-score-label {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.podium-slot.podium-rank-1 .podium-score-label { color: var(--gold); font-size: 1.05rem; }
+.podium-slot.podium-rank-2 .podium-score-label { color: #c0c0c0; }
+.podium-slot.podium-rank-3 .podium-score-label { color: #cd7f32; }
+
+.podium-score-sub {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+/* Mini stat bars inside podium card */
+.podium-mini-bars {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 2px;
+  border: 1px solid var(--border-light);
+}
+
+.podium-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.podium-bar-lbl {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  width: 32px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+
+.podium-bar-outer {
+  flex: 1;
+  height: 5px;
+  background: #111;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.podium-bar-inner {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.podium-bar-inner.econ { background: var(--stat-economy); }
+.podium-bar-inner.soc  { background: var(--stat-social); }
+.podium-bar-inner.env  { background: var(--stat-environment); }
+
+.podium-bar-val {
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 20px;
+  text-align: right;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+/* The physical podium block */
+.podium-block {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px 12px;
+  border: 1px solid var(--border-gold-dim);
+  border-bottom: none;
+  gap: 2px;
+}
+
+.podium-slot.podium-rank-1 .podium-block {
+  height: 72px;
+  background: linear-gradient(180deg, #2a1f00 0%, #1a1200 100%);
+  border-color: var(--gold);
+}
+
+.podium-slot.podium-rank-2 .podium-block {
+  height: 52px;
+  background: linear-gradient(180deg, #1e1e1e 0%, #161616 100%);
+  border-color: rgba(192, 192, 192, 0.3);
+}
+
+.podium-slot.podium-rank-3 .podium-block {
+  height: 36px;
+  background: linear-gradient(180deg, #1e1610 0%, #161008 100%);
+  border-color: rgba(205, 127, 50, 0.3);
+}
+
+.podium-slot.podium-empty .podium-block {
+  height: 36px;
+  background: #111;
+  opacity: 0.4;
+}
+
+.podium-rank-num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.podium-slot.podium-rank-1 .podium-rank-num { color: var(--gold); font-size: 1.6rem; }
+.podium-slot.podium-rank-2 .podium-rank-num { color: #c0c0c0; }
+.podium-slot.podium-rank-3 .podium-rank-num { color: #cd7f32; }
+
+.podium-rank-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-heading);
+  color: var(--text-muted);
+}
+
+.podium-slot.podium-rank-1 .podium-rank-label { color: var(--gold); }
+
+/* Conclusion box inside podium */
+.podium-conclusion {
+  background: rgba(46, 125, 50, 0.04);
+  border: 1px dashed rgba(46, 125, 50, 0.3);
+  border-radius: 2px;
+  padding: 14px 18px;
+  font-size: 0.88rem;
+  color: #a7f3d0;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.podium-conclusion strong { color: #a7f3d0; }
+
+@media (max-width: 600px) {
+  .podium-stage {
+    gap: 6px;
+  }
+  .podium-slot {
+    max-width: 120px;
+  }
+  .podium-name {
+    font-size: 0.78rem;
+  }
+  .podium-avatar {
+    font-size: 1.8rem;
+  }
+  .podium-mini-bars {
+    padding: 6px 6px;
+  }
+}

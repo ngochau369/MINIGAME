@@ -197,6 +197,30 @@
       </div>
     </div>
 
+    <!-- Game Finished Podium Modal -->
+    <div id="podium-modal" class="modal-backdrop hidden">
+      <div class="modal-content podium-modal-content">
+        <div class="podium-fireworks" id="podium-fireworks"></div>
+        <div class="modal-header podium-modal-header">
+          <div class="podium-title-wrap">
+            <svg class="icon-star-inline" viewBox="0 0 24 24" fill="currentColor" style="width:28px;height:28px;"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+            <h3>Bảng Vinh Danh Chung Cuộc</h3>
+          </div>
+          <button type="button" id="close-podium-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body podium-body">
+          <p class="podium-subtitle">Trò chơi đã kết thúc — Kết quả chung cuộc</p>
+          <div class="podium-stage" id="podium-stage">
+            <!-- Rendered by JS -->
+          </div>
+          <div class="podium-conclusion">
+            <p>💡 <strong>Ý nghĩa trò chơi:</strong> Nếu chỉ chọn tăng trưởng Kinh tế mà bỏ qua An sinh và Môi trường thì quốc gia sẽ sụp đổ. Đó là lý do vì sao bắt buộc phải chọn con đường phát triển bền vững, gắn tăng trưởng Kinh tế với tiến bộ, công bằng Xã hội và bảo vệ Môi trường <strong>(Kinh tế thị trường Định hướng XHCN)</strong>!</p>
+          </div>
+          <button type="button" id="close-podium-btn-2" class="btn-primary" style="margin-top:8px;">Đóng</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="/app.js?v=3"></script>
   </body>
