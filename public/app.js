@@ -349,9 +349,9 @@ els.homeButton.addEventListener('click', (e) => {
   const modal = document.getElementById('website-qr-modal');
   const qrImg = modal ? modal.querySelector('.qr-code-wrapper img') : null;
   if (modal && qrImg) {
-    let joinUrl = `https://minigame-nu-black.vercel.app/`;
+    let joinUrl = `https://minigame-cvj7.onrender.com/`;
     if (state.room && state.room.id) {
-      joinUrl = `https://minigame-nu-black.vercel.app/?room=${state.room.id}`;
+      joinUrl = `https://minigame-cvj7.onrender.com/?room=${state.room.id}`;
     }
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`;
     if (qrImg.getAttribute('src') !== qrApiUrl) {
