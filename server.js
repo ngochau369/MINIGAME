@@ -353,7 +353,7 @@ io.on('connection', (socket) => {
       hostId: socket.id,
       hostName: 'Host',
       status: 'lobby',
-      teams: [], // Individual players will be dynamically added as "teams" here
+      teams: [],
       players: [],
       currentRound: 0,
       roundDuration: Number(roundDuration) || 30,
@@ -362,7 +362,11 @@ io.on('connection', (socket) => {
       playerAnswers: {},
       roundResult: null,
       timerHandle: null,
-      tickHandle: null
+      tickHandle: null,
+      _disconnectTimers: {},
+      _hostDisconnectTimer: null,
+      _joinCountdownTimer: null,
+      _joinCountdownInterval: null
     };
     rooms.set(roomCode, room);
     socket.join(roomCode);
@@ -422,6 +426,30 @@ io.on('connection', (socket) => {
     socket.data.teamId = playerTeamId;
     socket.emit('room:joined', { room: serializeRoom(room), player });
     broadcastRoom(room);
+
+    // Mỗi khi có người join, reset countdown 10s
+    // Trong 10s này các nút tương tác bị disable để chờ mọi người vào đủ
+    if (room.status === 'lobby') {
+      if (room._joinCountdownTimer) {
+        clearTimeout(room._joinCountdownTimer);
+        clearInterval(room._joinCountdownInterval);
+      }
+      let secondsLeft = 10;
+      io.to(code).emit('lobby:countdown', { seconds: secondsLeft });
+      room._joinCountdownInterval = setInterval(() => {
+        secondsLeft--;
+        io.to(code).emit('lobby:countdown', { seconds: secondsLeft });
+        if (secondsLeft <= 0) {
+          clearInterval(room._joinCountdownInterval);
+          room._joinCountdownInterval = null;
+          io.to(code).emit('lobby:ready');
+        }
+      }, 1000);
+      room._joinCountdownTimer = setTimeout(() => {
+        clearInterval(room._joinCountdownInterval);
+        room._joinCountdownInterval = null;
+      }, 11000);
+    }
   });
 
   socket.on('host:start-game', ({ roomCode }) => {
@@ -473,14 +501,38 @@ io.on('connection', (socket) => {
     if (!room) return;
 
     if (room.hostId === socket.id) {
-      rooms.delete(roomCode);
-      io.to(roomCode).emit('room:deleted');
+      // Chờ 30s trước khi xóa phòng, cho phép host reconnect
+      room._hostDisconnectTimer = setTimeout(() => {
+        const r = rooms.get(roomCode);
+        if (r && r.hostId === socket.id) {
+          rooms.delete(roomCode);
+          io.to(roomCode).emit('room:deleted');
+        }
+      }, 30000);
       return;
     }
 
-    room.players = room.players.filter((player) => player.id !== socket.id);
-    room.teams = room.teams.filter((team) => team.id !== socket.id);
-    broadcastRoom(room);
+    // Player disconnect: chờ 30s trước khi xóa, cho phép reconnect
+    const teamId = socket.data.teamId;
+    if (!teamId) return;
+
+    room._disconnectTimers = room._disconnectTimers || {};
+    // Hủy timer cũ nếu có
+    if (room._disconnectTimers[teamId]) {
+      clearTimeout(room._disconnectTimers[teamId]);
+    }
+    room._disconnectTimers[teamId] = setTimeout(() => {
+      const r = rooms.get(roomCode);
+      if (!r) return;
+      // Chỉ xóa nếu player chưa reconnect (vẫn còn id cũ)
+      const stillGone = r.players.find(p => p.id === socket.id);
+      if (stillGone) {
+        r.players = r.players.filter(p => p.id !== socket.id);
+        r.teams = r.teams.filter(t => t.id !== teamId);
+        broadcastRoom(r);
+      }
+      delete r._disconnectTimers[teamId];
+    }, 30000);
   });
 });
 

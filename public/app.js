@@ -518,6 +518,39 @@ socket.on('room:deleted', () => {
   setMessage('Lưu ý: Host đã tắt phòng hoặc ngắt kết nối.');
 });
 
+// Countdown sau khi có người join mới — disable tương tác 10s
+socket.on('lobby:countdown', ({ seconds }) => {
+  const joinBtn = els.playerForm?.querySelector('button[type="submit"]');
+  const notice = document.getElementById('lobby-countdown-notice');
+  if (notice) {
+    notice.textContent = `⏳ Có người vừa tham gia. Vui lòng chờ ${seconds}s để ổn định kết nối...`;
+    notice.classList.remove('hidden');
+  }
+  if (joinBtn) {
+    joinBtn.disabled = true;
+    joinBtn.style.opacity = '0.6';
+  }
+  // Nếu đang ở room view, hiển thị trên room status
+  if (state.room) {
+    setMessage(`⏳ Có người mới tham gia. Đang chờ ổn định kết nối... (${seconds}s)`);
+  }
+});
+
+socket.on('lobby:ready', () => {
+  const joinBtn = els.playerForm?.querySelector('button[type="submit"]');
+  const notice = document.getElementById('lobby-countdown-notice');
+  if (notice) {
+    notice.classList.add('hidden');
+  }
+  if (joinBtn) {
+    joinBtn.disabled = false;
+    joinBtn.style.opacity = '1';
+  }
+  if (state.room) {
+    setMessage('✅ Kết nối ổn định. Sẵn sàng tham gia!');
+  }
+});
+
 socket.on('game:finished', ({ winner }) => {
   const conclusionText = "\n\nÝ nghĩa trò chơi: Nếu chỉ chọn tăng trưởng Kinh tế mà bỏ qua An sinh và Môi trường thì quốc gia sẽ sụp đổ. Đó là lý do vì sao bắt buộc phải chọn con đường phát triển bền vững, gắn tăng trưởng Kinh tế với tiến bộ, công bằng Xã hội và bảo vệ Môi trường (Kinh tế thị trường Định hướng XHCN)!";
   setMessage(`Trò chơi đã kết thúc! Xin chúc mừng thành viên ${winner?.name || 'N/A'} đã xuất sắc giành chiến thắng chung cuộc!${conclusionText}`);
