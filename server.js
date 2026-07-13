@@ -403,6 +403,12 @@ io.on('connection', (socket) => {
     const playerName = name || `Đồng chí ${room.players.length + 1}`;
     const playerTeamId = socket.id;
 
+    // Kiểm tra duplicate: tránh join 2 lần nếu event bị gửi lại
+    if (room.players.find(p => p.id === socket.id)) {
+      socket.emit('room:joined', { room: serializeRoom(room), player: room.players.find(p => p.id === socket.id) });
+      return;
+    }
+
     // Create an individual team representing this player
     const playerTeam = {
       id: playerTeamId,
@@ -427,28 +433,38 @@ io.on('connection', (socket) => {
     socket.emit('room:joined', { room: serializeRoom(room), player });
     broadcastRoom(room);
 
-    // Mỗi khi có người join, reset countdown 10s
-    // Trong 10s này các nút tương tác bị disable để chờ mọi người vào đủ
+    // Khi có người join lobby: reset countdown 10s
+    // Dùng flag để tránh chạy nhiều interval song song
     if (room.status === 'lobby') {
+      // Hủy sạch cả hai loại timer cũ
+      if (room._joinCountdownInterval) {
+        clearInterval(room._joinCountdownInterval);
+        room._joinCountdownInterval = null;
+      }
       if (room._joinCountdownTimer) {
         clearTimeout(room._joinCountdownTimer);
-        clearInterval(room._joinCountdownInterval);
+        room._joinCountdownTimer = null;
       }
+
       let secondsLeft = 10;
+      // Gửi ngay giây đầu tiên
       io.to(code).emit('lobby:countdown', { seconds: secondsLeft });
+
+      // Chỉ tạo 1 interval mới duy nhất
       room._joinCountdownInterval = setInterval(() => {
         secondsLeft--;
-        io.to(code).emit('lobby:countdown', { seconds: secondsLeft });
-        if (secondsLeft <= 0) {
+        if (secondsLeft > 0) {
+          io.to(code).emit('lobby:countdown', { seconds: secondsLeft });
+        } else {
           clearInterval(room._joinCountdownInterval);
           room._joinCountdownInterval = null;
+          if (room._joinCountdownTimer) {
+            clearTimeout(room._joinCountdownTimer);
+            room._joinCountdownTimer = null;
+          }
           io.to(code).emit('lobby:ready');
         }
       }, 1000);
-      room._joinCountdownTimer = setTimeout(() => {
-        clearInterval(room._joinCountdownInterval);
-        room._joinCountdownInterval = null;
-      }, 11000);
     }
   });
 
