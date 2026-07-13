@@ -179,7 +179,13 @@ function getCorrectOption(roundData) {
 }
 
 function allPlayersAnswered(room) {
-  return room.players.every((player) => {
+  // Chỉ tính những player CHƯA bị loại
+  const activePlayers = room.players.filter((player) => {
+    const team = room.teams.find(t => t.id === player.teamId);
+    return team && !team.eliminated;
+  });
+  if (activePlayers.length === 0) return false;
+  return activePlayers.every((player) => {
     return typeof room.playerAnswers?.[player.teamId]?.[player.id] === 'string';
   });
 }
@@ -241,14 +247,28 @@ function finalizeRound(roomId) {
     team.correct = room.roundCorrectAnswer ? team.answer === room.roundCorrectAnswer : false;
 
     const answer = room.roundAnswers[team.id];
-    if (!answer) return;
+    if (!answer) {
+      // Không trả lời — delta = 0
+      team.scoreDelta = { economy: 0, social: 0, environment: 0 };
+      return;
+    }
 
     const option = roundData.options.find((item) => item.id === answer);
-    if (!option) return;
+    if (!option) {
+      team.scoreDelta = { economy: 0, social: 0, environment: 0 };
+      return;
+    }
 
-    team.score.economy += option.effects.economy || 0;
-    team.score.social += option.effects.social || 0;
-    team.score.environment += option.effects.environment || 0;
+    // Lưu delta trước khi cộng vào điểm
+    team.scoreDelta = {
+      economy: option.effects.economy || 0,
+      social: option.effects.social || 0,
+      environment: option.effects.environment || 0
+    };
+
+    team.score.economy += team.scoreDelta.economy;
+    team.score.social += team.scoreDelta.social;
+    team.score.environment += team.scoreDelta.environment;
 
     team.eliminated = [team.score.economy, team.score.social, team.score.environment].some((value) => value <= 0);
   });
@@ -289,6 +309,7 @@ function startRound(room, roundNumber) {
   room.roundResult = null;
   room.teams.forEach((team) => {
     team.answer = null;
+    team.scoreDelta = null;
   });
   clearRoundTimer(room);
   room.timerHandle = setTimeout(() => {
