@@ -1,24 +1,12 @@
-const socket = io({
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 10
-});
+const socket = io();
 
 const state = {
-  role: 'player',
+  role: 'player', // Default to player now
   room: null,
   previewRoom: null,
   player: null,
-  teamId: null,
-  rejoinInfo: null,
-  // Cache round data để không cần server gửi lại mỗi broadcast
-  roundCache: {},  // { [roundIndex]: roundData }
-  myAnswer: null,  // đáp án của player này, lưu local
+  teamId: null
 };
-
-// Rounds data từ server — được populate khi nhận room:joined-data
-// Client cache lại để không cần gửi lại trong mỗi broadcast
-const roundsCache = {};
 
 const els = {
   hostForm: document.getElementById('host-form'),
@@ -75,25 +63,18 @@ function switchView(role) {
   }
 }
 
-// Lưu hash lobby để tránh re-render khi không thay đổi
-let _lastLobbyHash = '';
-
 function renderLobby() {
   if (!state.room || !els.lobbyPlayersList) return;
 
   const players = state.room.players || [];
   const teams = state.room.teams || [];
 
-  // Hash đơn giản: số lượng + tên
-  const hash = teams.map(t => t.id + t.name).join('|') + '|' + players.length;
-  if (hash === _lastLobbyHash) return; // không thay đổi, bỏ qua
-  _lastLobbyHash = hash;
-
   if (players.length === 0) {
     els.lobbyPlayersList.innerHTML = '<p class="empty-lobby-text">Chưa có người chơi nào tham gia</p>';
     return;
   }
 
+  // Group players by teamId
   const playersByTeam = {};
   players.forEach((p) => {
     playersByTeam[p.teamId] = playersByTeam[p.teamId] || [];
@@ -107,6 +88,7 @@ function renderLobby() {
       const isMe = p.id === socket.id;
       return `<div class="lobby-team-member">${p.name}${isMe ? ' <span class="badge" style="font-size:0.65rem;background:var(--success);">Bạn</span>' : ''}</div>`;
     }).join('');
+
     return `
       <div class="lobby-team-group">
         <div class="lobby-team-title">
@@ -123,212 +105,6 @@ function renderLobby() {
   els.lobbyPlayersList.innerHTML = html;
 }
 
-// ── Dirty-check helpers ──────────────────────────────────────────────────────
-let _lastStatus = null;
-let _lastScoreboardHash = '';
-let _lastRoundCardHash = '';
-let _lastOptionsHash = '';
-let _lastResultHash = '';
-
-function getRound() {
-  if (!state.room) return null;
-  const idx = state.room.currentRound;
-  if (!idx) return null;
-  // roundsCache key = round.id (1-10), khớp với currentRound
-  return roundsCache[idx] || state.room.round || null;
-}
-
-function renderScoreboard() {
-  if (!els.scoreboard) return;
-  const room = state.room;
-  if (!room) return;
-
-  const visibleTeams = (room.teams || []).filter(t =>
-    (room.players || []).some(p => p.teamId === t.id)
-  );
-  const sorted = [...visibleTeams].sort((a, b) => {
-    if (a.eliminated !== b.eliminated) return a.eliminated ? 1 : -1;
-    const tA = a.score.economy + a.score.social + a.score.environment;
-    const tB = b.score.economy + b.score.social + b.score.environment;
-    return tB - tA;
-  });
-
-  // Hash để skip nếu không thay đổi
-  const hash = sorted.map(t =>
-    `${t.id}:${t.score.economy},${t.score.social},${t.score.environment},${t.eliminated}`
-  ).join('|');
-  if (hash === _lastScoreboardHash) return;
-  _lastScoreboardHash = hash;
-
-  if (sorted.length === 0) {
-    els.scoreboard.innerHTML = '<p class="empty-lobby-text">Chưa có người chơi nào tham gia</p>';
-    return;
-  }
-
-  els.scoreboard.innerHTML = sorted.map((team, index) => {
-    const total = team.score.economy + team.score.social + team.score.environment;
-    const isEliminated = team.eliminated;
-    const isLeader = index === 0;
-    const econPct = Math.min(100, Math.max(0, team.score.economy));
-    const socPct  = Math.min(100, Math.max(0, team.score.social));
-    const envPct  = Math.min(100, Math.max(0, team.score.environment));
-    return `
-      <div class="score-row ${isEliminated ? 'eliminated' : ''} ${isLeader ? 'leader' : ''}">
-        <div class="score-team-meta">
-          <div class="score-team-main">
-            <div class="score-rank-badge">${index + 1}</div>
-            <div class="score-team-text">
-              <span class="team-name-header">${team.name}${isEliminated ? ' <span class="eliminated-tag">Bị loại</span>' : ''}</span>
-              <span class="team-subtext">${isEliminated ? 'Bị loại' : 'Đang tranh tài'}</span>
-            </div>
-          </div>
-          <span class="team-total-score">${total}đ</span>
-        </div>
-        <div class="score-bars">
-          <div class="score-bar-group" data-stat="economy">
-            <span class="score-bar-label">KINH</span>
-            <div class="score-bar-outer"><div class="score-bar-inner" style="width:${econPct}%"></div></div>
-            <span class="score-bar-value">${team.score.economy}</span>
-          </div>
-          <div class="score-bar-group" data-stat="social">
-            <span class="score-bar-label">XH</span>
-            <div class="score-bar-outer"><div class="score-bar-inner" style="width:${socPct}%"></div></div>
-            <span class="score-bar-value">${team.score.social}</span>
-          </div>
-          <div class="score-bar-group" data-stat="environment">
-            <span class="score-bar-label">MT</span>
-            <div class="score-bar-outer"><div class="score-bar-inner" style="width:${envPct}%"></div></div>
-            <span class="score-bar-value">${team.score.environment}</span>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function renderOptions() {
-  const room = state.room;
-  if (!room) return;
-  const round = getRound();
-  if (!round) return;
-  const isRoundResult = room.status === 'round-result';
-  const myAnswer = state.myAnswer;
-  const myTeam = room.teams.find(t => t.id === state.player?.teamId);
-  const canAnswer = state.role === 'player' && state.player && !myAnswer && !isRoundResult && !myTeam?.eliminated;
-
-  const hash = `${myAnswer}|${isRoundResult}|${room.roundCorrectAnswer}|${canAnswer}`;
-  if (hash === _lastOptionsHash) return;
-  _lastOptionsHash = hash;
-
-  els.optionsList.innerHTML = round.options.map((option) => {
-    const isSelected = myAnswer === option.id;
-    const isCorrect = room.roundCorrectAnswer === option.id;
-    const classes = `option-btn ${isSelected ? 'selected' : ''} ${isCorrect && isRoundResult ? 'correct' : ''}`.trim();
-    return `
-      <button class="${classes}" data-answer="${option.id}" ${canAnswer ? '' : 'disabled'}>
-        <span>${option.id}. ${option.text}</span>
-        ${isSelected ? '<span class="badge">Đã chọn</span>' : ''}
-        ${isCorrect && isRoundResult ? '<span class="badge correct-badge">Đáp án đúng</span>' : ''}
-      </button>`;
-  }).join('');
-}
-
-function renderRoundStatus() {
-  const room = state.room;
-  if (!room) return;
-  const isRoundResult = room.status === 'round-result';
-
-  if (isRoundResult) {
-    const finalTeams = (room.teams || []).map((team) => {
-      const answer = room.roundAnswers?.[team.id] || 'chưa trả lời';
-      const correct = room.roundCorrectAnswer ? (answer === room.roundCorrectAnswer) : false;
-      const isAnswered = answer !== 'chưa trả lời';
-      let feedback = '';
-      if (isAnswered) {
-        feedback = correct
-          ? ' <span class="indicator-correct">đúng</span>'
-          : ' <span class="indicator-incorrect">sai</span>';
-      }
-      return `${team.name}: <span class="badge-answer">${answer}</span>${feedback}`;
-    });
-    els.roundStatus.innerHTML = finalTeams.length
-      ? `Kết quả: ${finalTeams.join(' • ')}`
-      : 'Chưa có người chơi nào chọn đáp án.';
-  } else {
-    // Dùng answerSummary (compact) thay vì playerAnswers đầy đủ
-    const summary = room.answerSummary || {};
-    const answeredCount = room.answeredCount || {};
-    const totalPlayers = (room.players || []).length;
-    const totalAnswered = Object.values(answeredCount).reduce((s, c) => s + c, 0);
-
-    const teamLines = (room.teams || []).map((team) => {
-      const counts = summary[team.id];
-      if (!counts || Object.values(counts).every(c => c === 0)) return `${team.name}: chưa trả lời`;
-      const entries = Object.entries(counts)
-        .filter(([, c]) => c > 0)
-        .map(([a, c]) => `${a}:${c}`);
-      return `${team.name}: ${entries.join(', ')}`;
-    });
-    els.roundStatus.innerHTML = `Đã trả lời: ${totalAnswered}/${totalPlayers} • ${teamLines.join(' • ')}`;
-  }
-}
-
-function renderRoundCard() {
-  const room = state.room;
-  if (!room) return;
-  const round = getRound();
-  const showCard = (room.status === 'playing' || room.status === 'round-result') && round;
-
-  if (!showCard) {
-    els.roundCard.classList.add('hidden');
-    els.resultCard.classList.add('hidden');
-    return;
-  }
-
-  const hash = `${room.currentRound}|${round.title}`;
-  if (hash !== _lastRoundCardHash) {
-    _lastRoundCardHash = hash;
-    els.roundTitle.textContent = round.title;
-    els.roundScenario.textContent = round.scenario;
-    els.roundCard.classList.remove('hidden');
-  } else {
-    els.roundCard.classList.remove('hidden');
-  }
-
-  renderOptions();
-  renderRoundStatus();
-  updateTimer();
-
-  // Result card
-  if (room.status === 'round-result' && room.roundResult) {
-    const correctOpt = round?.options?.find(o => o.id === room.roundCorrectAnswer);
-    const explanationHtml = correctOpt?.explanation
-      ? `<div class="explanation-box"><strong>💡 Phân tích & Bẫy tư duy:</strong> ${correctOpt.explanation}</div>`
-      : '';
-    const resultHash = `${room.roundResult.title}|${room.roundResult.summary}`;
-    if (resultHash !== _lastResultHash) {
-      _lastResultHash = resultHash;
-      els.resultSummary.innerHTML = `
-        <div><strong>${room.roundResult.title}:</strong> ${room.roundResult.summary}</div>
-        ${explanationHtml}`;
-    }
-    els.resultCard.classList.remove('hidden');
-  } else {
-    els.resultCard.classList.add('hidden');
-  }
-}
-
-function updateTimer() {
-  if (!state.room) return;
-  const duration = state.room.roundDuration || 30;
-  const timeLeft = typeof state.room.serverTimeLeft === 'number'
-    ? state.room.serverTimeLeft
-    : Math.max(0, Math.ceil((duration * 1000 - (Date.now() - state.room.roundStartedAt)) / 1000));
-  els.roundTimer.textContent = `Thời gian còn lại: ${timeLeft}s`;
-  if (els.timerProgressBar) {
-    els.timerProgressBar.style.width = `${(timeLeft / duration) * 100}%`;
-  }
-}
-
 function renderRoom() {
   if (!state.room) {
     els.setupView.classList.remove('hidden');
@@ -341,46 +117,208 @@ function renderRoom() {
   els.roomTitle.textContent = state.room.name;
   els.roomCodeDisplay.textContent = state.room.id;
 
-  const statusMap = { lobby: 'Đang chờ', playing: 'Đang diễn ra', 'round-result': 'Kết quả vòng', finished: 'Hoàn thành' };
-  const newStatus = statusMap[state.room.status] || 'Đang chờ';
-  if (newStatus !== _lastStatus) {
-    _lastStatus = newStatus;
-    els.roomStatus.textContent = newStatus;
-  }
+  // Translate status text for beautiful UI
+  let statusText = 'Đang chờ';
+  if (state.room.status === 'playing') statusText = 'Đang diễn ra';
+  if (state.room.status === 'round-result') statusText = 'Kết quả vòng';
+  if (state.room.status === 'finished') statusText = 'Hoàn thành';
+  els.roomStatus.textContent = statusText;
 
   const isHost = state.role === 'host';
   els.hostControls.classList.toggle('hidden', !isHost);
 
+
+
   if (isHost) {
     const showStart = state.room.status === 'lobby';
-    const showNext  = state.room.status === 'round-result';
+    const showNext = state.room.status === 'round-result';
     els.startGameBtn.classList.toggle('hidden', !showStart);
     els.nextRoundBtn.classList.toggle('hidden', !showNext);
 
     if (showStart) {
-      const activeCount = (state.room.teams || []).filter(t =>
-        (state.room.players || []).some(p => p.teamId === t.id)
-      ).length;
-      const notEnough = activeCount < 2;
-      els.startGameBtn.disabled = notEnough;
-      els.startGameBtn.textContent = notEnough
-        ? 'Chờ thêm thành viên tham gia (cần ít nhất 2 thành viên)'
-        : 'Bắt đầu trò chơi';
-      els.startGameBtn.style.opacity = notEnough ? '0.6' : '1';
-      els.startGameBtn.style.cursor = notEnough ? 'not-allowed' : 'pointer';
+      const activeTeams = (state.room.teams || []).filter((team) => {
+        return (state.room.players || []).some((player) => player.teamId === team.id);
+      });
+      if (activeTeams.length < 2) {
+        els.startGameBtn.disabled = true;
+        els.startGameBtn.title = "Cần ít nhất 2 thành viên có người chơi để bắt đầu";
+        els.startGameBtn.textContent = "Chờ thêm thành viên tham gia (cần ít nhất 2 thành viên)";
+        els.startGameBtn.style.opacity = "0.6";
+        els.startGameBtn.style.cursor = "not-allowed";
+      } else {
+        els.startGameBtn.disabled = false;
+        els.startGameBtn.title = "";
+        els.startGameBtn.textContent = "Bắt đầu trò chơi";
+        els.startGameBtn.style.opacity = "1";
+        els.startGameBtn.style.cursor = "pointer";
+      }
     }
   }
 
   els.scoreboardPanel.classList.toggle('hidden', !isHost);
   els.scoreboardNotice.classList.toggle('hidden', isHost);
+
   if (!isHost) {
     els.scoreboardNotice.textContent = 'Chỉ host mới có quyền xem bảng điểm trên màn hình chung.';
   } else {
-    renderScoreboard();
+    // Only display teams that have joined players
+    const visibleTeams = (state.room.teams || []).filter((team) => {
+      return (state.room.players || []).some((player) => player.teamId === team.id);
+    });
+
+    // Sort teams by total score (and push eliminated ones to the bottom)
+    const sortedTeams = [...visibleTeams].sort((a, b) => {
+      if (a.eliminated && !b.eliminated) return 1;
+      if (!a.eliminated && b.eliminated) return -1;
+      const totalA = a.score.economy + a.score.social + a.score.environment;
+      const totalB = b.score.economy + b.score.social + b.score.environment;
+      return totalB - totalA;
+    });
+
+    const table = sortedTeams.map((team, index) => {
+      const total = team.score.economy + team.score.social + team.score.environment;
+      const isEliminated = team.eliminated;
+      const isLeader = index === 0;
+
+      const econPct = Math.min(100, Math.max(0, team.score.economy));
+      const socPct = Math.min(100, Math.max(0, team.score.social));
+      const envPct = Math.min(100, Math.max(0, team.score.environment));
+
+      return `
+        <div class="score-row ${isEliminated ? 'eliminated' : ''} ${isLeader ? 'leader' : ''}">
+          <div class="score-team-meta">
+            <div class="score-team-main">
+              <div class="score-rank-badge">${index + 1}</div>
+              <div class="score-team-text">
+                <span class="team-name-header">${team.name}${isEliminated ? ' <span class="eliminated-tag">Bị loại</span>' : ''}</span>
+                <span class="team-subtext">${isEliminated ? 'Bị loại' : 'Đang tranh tài'}</span>
+              </div>
+            </div>
+            <span class="team-total-score">${total}đ</span>
+          </div>
+          <div class="score-bars">
+            <div class="score-bar-group" data-stat="economy">
+              <span class="score-bar-label">KINH</span>
+              <div class="score-bar-outer">
+                <div class="score-bar-inner" style="width: ${econPct}%;"></div>
+              </div>
+              <span class="score-bar-value">${team.score.economy}</span>
+            </div>
+            <div class="score-bar-group" data-stat="social">
+              <span class="score-bar-label">XH</span>
+              <div class="score-bar-outer">
+                <div class="score-bar-inner" style="width: ${socPct}%;"></div>
+              </div>
+              <span class="score-bar-value">${team.score.social}</span>
+            </div>
+            <div class="score-bar-group" data-stat="environment">
+              <span class="score-bar-label">MT</span>
+              <div class="score-bar-outer">
+                <div class="score-bar-inner" style="width: ${envPct}%;"></div>
+              </div>
+              <span class="score-bar-value">${team.score.environment}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    els.scoreboard.innerHTML = table.join('') || '<p class="empty-lobby-text">Chưa có người chơi nào tham gia</p>';
   }
 
+  // Render lobby members
   renderLobby();
-  renderRoundCard();
+
+  // Round Card & Options
+  if ((state.room.status === 'playing' || state.room.status === 'round-result') && state.room.round) {
+    els.roundCard.classList.remove('hidden');
+    els.roundTitle.textContent = state.room.round.title;
+    els.roundScenario.textContent = state.room.round.scenario;
+
+    const isRoundResult = state.room.status === 'round-result';
+    const myTeam = state.room.teams.find((team) => team.id === state.player?.teamId);
+    const myTeamAnswers = state.room.playerAnswers?.[myTeam?.id] || {};
+    const playerAnswer = myTeamAnswers?.[state.player?.id];
+    const playerAnswered = typeof playerAnswer === 'string';
+    const canAnswer = state.role === 'player' && state.player && state.player.teamId && !playerAnswered && !isRoundResult && !myTeam?.eliminated;
+
+    els.optionsList.innerHTML = state.room.round.options.map((option) => {
+      const isSelected = playerAnswer === option.id;
+      const isCorrect = state.room.roundCorrectAnswer === option.id;
+      const classes = `option-btn ${isSelected ? 'selected' : ''} ${isCorrect && isRoundResult ? 'correct' : ''}`.trim();
+      return `
+        <button class="${classes}" data-answer="${option.id}" ${canAnswer ? '' : 'disabled'}>
+          <span>${option.id}. ${option.text}</span>
+          ${isSelected ? '<span class="badge">Đã chọn</span>' : ''}
+          ${isCorrect && isRoundResult ? '<span class="badge correct-badge">Đáp án đúng</span>' : ''}
+        </button>
+      `;
+    }).join('');
+
+    if (isRoundResult) {
+      const finalTeams = (state.room.teams || []).map((team) => {
+        const answer = state.room.roundAnswers?.[team.id] || 'chưa trả lời';
+        const correct = state.room.roundCorrectAnswer ? (answer === state.room.roundCorrectAnswer) : false;
+        const isAnswered = answer !== 'chưa trả lời' && answer !== 'không có';
+        let feedback = '';
+        if (isAnswered) {
+          feedback = correct
+            ? ' <span class="indicator-correct">đúng</span>'
+            : ' <span class="indicator-incorrect">sai</span>';
+        }
+        return `${team.name}: <span class="badge-answer">${answer}</span>${feedback}`;
+      });
+      els.roundStatus.innerHTML = finalTeams.length ? `Kết quả: ${finalTeams.join(' • ')}` : 'Chưa có người chơi nào chọn đáp án.';
+    } else {
+      const answeredTeams = (state.room.teams || []).map((team) => {
+        const answers = state.room.playerAnswers?.[team.id] ? Object.values(state.room.playerAnswers[team.id]) : [];
+        if (!answers.length) return `${team.name}: chưa trả lời`;
+        const counts = answers.reduce((map, answer) => {
+          map[answer] = (map[answer] || 0) + 1;
+          return map;
+        }, {});
+        const entries = Object.entries(counts).map(([answer, count]) => `${answer}:${count}`);
+        return `${team.name}: ${entries.join(', ')}`;
+      });
+      els.roundStatus.innerHTML = answeredTeams.length
+        ? `Vote người chơi: ${answeredTeams.join(' • ')}`
+        : 'Chưa có người chơi nào chọn đáp án.';
+    }
+
+    // Timer calculation & visual updates
+    const duration = state.room.roundDuration || 30;
+    const timeLeft = typeof state.room.serverTimeLeft === 'number'
+      ? state.room.serverTimeLeft
+      : Math.max(0, Math.ceil((duration * 1000 - (Date.now() - state.room.roundStartedAt)) / 1000));
+
+    els.roundTimer.textContent = `Thời gian còn lại: ${timeLeft}s`;
+    if (els.timerProgressBar) {
+      const percentage = (timeLeft / duration) * 100;
+      els.timerProgressBar.style.width = `${percentage}%`;
+    }
+
+    els.resultCard.classList.add('hidden');
+  } else {
+    els.roundCard.classList.add('hidden');
+  }
+
+  // Display Result Card
+  if (state.room.status === 'round-result' && state.room.roundResult) {
+    els.resultCard.classList.remove('hidden');
+
+    // Tìm phương án đúng của vòng hiện tại để hiển thị phần giải thích / bẫy tư duy
+    const correctOpt = state.room.round?.options?.find(opt => opt.id === state.room.roundCorrectAnswer);
+    const explanationHtml = correctOpt && correctOpt.explanation
+      ? `<div class="explanation-box"><strong>💡 Phân tích & Bẫy tư duy:</strong> ${correctOpt.explanation}</div>`
+      : '';
+
+    els.resultSummary.innerHTML = `
+      <div><strong>${state.room.roundResult.title}:</strong> ${state.room.roundResult.summary}</div>
+      ${explanationHtml}
+    `;
+  } else {
+    els.resultCard.classList.add('hidden');
+  }
 }
 
 function populateTeamOptions(room = state.room || state.previewRoom) {
@@ -522,32 +460,12 @@ els.optionsList.addEventListener('click', (event) => {
 // Socket Events
 socket.on('connect', () => {
   setMessage('Hệ thống: Đã kết nối với máy chủ.');
-
-  // Nếu đang có session cũ → tự động rejoin
-  if (state.rejoinInfo) {
-    const { role, roomCode, playerName, teamId } = state.rejoinInfo;
-    if (role === 'host') {
-      socket.emit('host:rejoin-room', { roomCode });
-      setMessage('Đang kết nối lại phòng host...');
-    } else if (role === 'player') {
-      socket.emit('player:join-room', { roomCode, name: playerName, rejoinToken: teamId });
-      setMessage('Đang kết nối lại phòng...');
-    }
-  } else {
-    checkUrlParams();
-  }
+  checkUrlParams();
 });
 
 socket.on('room:created', ({ room }) => {
-  if (room.round) roundsCache[room.round.id] = room.round;
   state.room = room;
   state.role = 'host';
-  state.rejoinInfo = { role: 'host', roomCode: room.id };
-  _lastLobbyHash = '';
-  _lastScoreboardHash = '';
-  _lastRoundCardHash = '';
-  _lastOptionsHash = '';
-  _lastResultHash = '';
   renderRoom();
   populateTeamOptions();
   setMessage(`Hệ thống: Đã tạo phòng ${room.id} thành công.`);
@@ -559,94 +477,26 @@ socket.on('room:preview', ({ room }) => {
   setMessage(`Phòng tìm thấy: ${room.name}. Vui lòng chọn nhóm của bạn.`);
 });
 
-socket.on('room:joined', ({ player }) => {
-  // Nhận thông tin player trước, full room data sẽ đến qua room:joined-data
+socket.on('room:joined', ({ room, player }) => {
+  state.room = room;
+  state.previewRoom = null;
   state.player = player;
   state.teamId = player.teamId;
   state.role = 'player';
-  state.myAnswer = null;
-});
-
-socket.on('room:joined-data', (roomData) => {
-  // Cache round data nếu server gửi kèm (full join/rejoin)
-  if (roomData.round) {
-    roundsCache[roomData.round.id] = roomData.round;
-  }
-  if (roomData.myAnswer) {
-    state.myAnswer = roomData.myAnswer;
-  }
-  state.room = roomData;
-  if (!state.player && roomData.players) {
-    const me = roomData.players.find(p => p.teamId === state.teamId);
-    if (me) state.player = me;
-  }
-  state.rejoinInfo = {
-    role: 'player',
-    roomCode: roomData.id,
-    playerName: state.player?.name,
-    teamId: state.teamId
-  };
-  // Reset dirty-check để force full render
-  _lastLobbyHash = '';
-  _lastScoreboardHash = '';
-  _lastRoundCardHash = '';
-  _lastOptionsHash = '';
-  _lastResultHash = '';
   renderRoom();
-  populateTeamOptions(roomData);
-  setMessage(`Hệ thống: Bạn đã tham gia phòng ${roomData.id} với tư cách là ${state.player?.name}.`);
+  populateTeamOptions(room);
+  setMessage(`Hệ thống: Bạn đã tham gia phòng ${room.id} với tư cách là ${player.name}.`);
 });
 
-let _renderPending = false;
-socket.on('room:update', (roomData) => {
-  if (roomData.round) {
-    roundsCache[roomData.round.id] = roomData.round;
-  }
-  state.room = roomData;
-  if (state.player && state.teamId) {
-    const updated = roomData.players?.find(p => p.teamId === state.teamId);
-    if (updated) state.player = updated;
-  }
-  if (!_renderPending) {
-    _renderPending = true;
-    requestAnimationFrame(() => {
-      _renderPending = false;
-      renderRoom();
-      populateTeamOptions();
-    });
-  }
+socket.on('room:update', (room) => {
+  state.room = room;
+  renderRoom();
+  populateTeamOptions();
 });
 
-socket.on('round:start', ({ round, roundStartedAt, roundDuration }) => {
-  // Server gửi round data đầy đủ trong event này — cache lại
-  if (round) {
-    roundsCache[round.id] = round;
-  }
-  state.myAnswer = null;
-  _lastOptionsHash = '';
-  _lastRoundCardHash = '';
-  _lastResultHash = '';
-  if (state.room) {
-    state.room.serverTimeLeft = null;
-    state.room.roundStartedAt = roundStartedAt;
-    state.room.roundDuration = roundDuration;
-    // Cập nhật currentRound nếu biết
-    if (round) state.room.currentRound = round.id;
-    state.room.status = 'playing';
-    state.room.roundAnswers = {};
-    state.room.answerSummary = {};
-    state.room.answeredCount = {};
-  }
+socket.on('round:start', () => {
   renderRoom();
   setMessage('Bắt đầu vòng chơi mới! Hãy thảo luận và đưa ra quyết sách.');
-});
-
-// Server xác nhận đáp án của chính mình — không cần broadcast toàn phòng
-socket.on('answer:confirmed', ({ answer }) => {
-  state.myAnswer = answer;
-  _lastOptionsHash = ''; // force re-render options
-  renderOptions();
-  setMessage('Đã nộp đáp án của bạn thành công.');
 });
 
 socket.on('round:tick', ({ timeLeft }) => {
@@ -664,43 +514,25 @@ socket.on('round:tick', ({ timeLeft }) => {
 socket.on('room:deleted', () => {
   state.room = null;
   state.player = null;
-  state.rejoinInfo = null; // Xóa thông tin rejoin vì phòng đã bị xóa hẳn
   renderRoom();
   setMessage('Lưu ý: Host đã tắt phòng hoặc ngắt kết nối.');
 });
 
-socket.on('game:finished', ({ winner, ranking, top3 }) => {
-  setMessage(`Trò chơi đã kết thúc! Xin chúc mừng ${winner?.name || 'N/A'} đã giành chiến thắng chung cuộc!`);
-  showPodium(top3 || [], ranking || []);
+socket.on('game:finished', ({ winner }) => {
+  const conclusionText = "\n\nÝ nghĩa trò chơi: Nếu chỉ chọn tăng trưởng Kinh tế mà bỏ qua An sinh và Môi trường thì quốc gia sẽ sụp đổ. Đó là lý do vì sao bắt buộc phải chọn con đường phát triển bền vững, gắn tăng trưởng Kinh tế với tiến bộ, công bằng Xã hội và bảo vệ Môi trường (Kinh tế thị trường Định hướng XHCN)!";
+  setMessage(`Trò chơi đã kết thúc! Xin chúc mừng thành viên ${winner?.name || 'N/A'} đã xuất sắc giành chiến thắng chung cuộc!${conclusionText}`);
 });
 
 socket.on('error', ({ message }) => {
   setMessage(`Lỗi: ${message}`);
 });
 
-socket.on('disconnect', (reason) => {
-  setMessage(`Hệ thống: Mất kết nối (${reason}). Đang thử kết nối lại...`);
-});
-
-socket.on('reconnect', (attemptNumber) => {
-  setMessage(`Hệ thống: Đã kết nối lại sau ${attemptNumber} lần thử.`);
-});
-
-socket.on('reconnect_error', () => {
-  setMessage('Hệ thống: Không thể kết nối lại. Vui lòng kiểm tra mạng.');
-});
-
-socket.on('reconnect_failed', () => {
-  setMessage('Hệ thống: Kết nối thất bại. Vui lòng tải lại trang.');
-});
-
 let timerTick = null;
 function startTimerTick() {
   if (timerTick) clearInterval(timerTick);
   timerTick = setInterval(() => {
-    // Chỉ update timer text — không rebuild toàn bộ DOM
     if (state.room?.status === 'playing' && state.room.roundStartedAt) {
-      updateTimer();
+      renderRoom();
     }
   }, 1000);
 }
@@ -709,7 +541,6 @@ function startTimerTick() {
 let paramsChecked = false;
 function checkUrlParams() {
   if (paramsChecked) return;
-  if (state.rejoinInfo) return; // Không check URL params nếu đang rejoin
   const urlParams = new URLSearchParams(window.location.search);
   const roomCode = urlParams.get('room');
   if (roomCode) {
@@ -726,97 +557,7 @@ function checkUrlParams() {
   }
 }
 
-// ── Podium (kết thúc game) ──────────────────────────────────────────────────
-function showPodium(top3, ranking) {
-  const modal = document.getElementById('podium-modal');
-  const stage = document.getElementById('podium-stage');
-  if (!modal || !stage) return;
-
-  // Podium order: 2nd (left) | 1st (center) | 3rd (right)
-  const slots = [
-    { rank: 2, data: top3[1] || null },
-    { rank: 1, data: top3[0] || null },
-    { rank: 3, data: top3[2] || null }
-  ];
-
-  const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-  const rankLabels = { 1: 'Quán Quân', 2: 'Á Quân', 3: 'Hạng Ba' };
-
-  stage.innerHTML = slots.map(({ rank, data }) => {
-    if (!data) return `<div class="podium-slot podium-rank-${rank} podium-empty"><div class="podium-block"><span class="podium-rank-num">${rank}</span></div></div>`;
-
-    const econPct = Math.min(100, Math.max(0, data.score.economy));
-    const socPct  = Math.min(100, Math.max(0, data.score.social));
-    const envPct  = Math.min(100, Math.max(0, data.score.environment));
-
-    return `
-      <div class="podium-slot podium-rank-${rank}">
-        <div class="podium-avatar">${medals[rank]}</div>
-        <div class="podium-name">${data.name}</div>
-        <div class="podium-score-label">${data.sustainable}đ <span class="podium-score-sub">cân bằng</span></div>
-        <div class="podium-mini-bars">
-          <div class="podium-bar-row" title="Kinh tế">
-            <span class="podium-bar-lbl">KINH</span>
-            <div class="podium-bar-outer"><div class="podium-bar-inner econ" style="width:${econPct}%"></div></div>
-            <span class="podium-bar-val" style="color:var(--stat-economy)">${data.score.economy}</span>
-          </div>
-          <div class="podium-bar-row" title="Xã hội">
-            <span class="podium-bar-lbl">XH</span>
-            <div class="podium-bar-outer"><div class="podium-bar-inner soc" style="width:${socPct}%"></div></div>
-            <span class="podium-bar-val" style="color:var(--stat-social)">${data.score.social}</span>
-          </div>
-          <div class="podium-bar-row" title="Môi trường">
-            <span class="podium-bar-lbl">MT</span>
-            <div class="podium-bar-outer"><div class="podium-bar-inner env" style="width:${envPct}%"></div></div>
-            <span class="podium-bar-val" style="color:var(--stat-environment)">${data.score.environment}</span>
-          </div>
-        </div>
-        <div class="podium-block">
-          <span class="podium-rank-num">${rank}</span>
-          <span class="podium-rank-label">${rankLabels[rank]}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  modal.classList.remove('hidden');
-  spawnFireworks();
-}
-
-function spawnFireworks() {
-  const container = document.getElementById('podium-fireworks');
-  if (!container) return;
-  container.innerHTML = '';
-  const colors = ['#c9a227', '#a61b1b', '#ffffff', '#e0b62d', '#f87171'];
-  for (let i = 0; i < 28; i++) {
-    const p = document.createElement('div');
-    p.className = 'firework-particle';
-    p.style.cssText = `
-      left: ${Math.random() * 100}%;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      animation-delay: ${Math.random() * 1.4}s;
-      animation-duration: ${1.2 + Math.random() * 0.8}s;
-      width: ${4 + Math.random() * 5}px;
-      height: ${4 + Math.random() * 5}px;
-    `;
-    container.appendChild(p);
-  }
-}
-
-// Close podium modal
-document.getElementById('close-podium-btn')?.addEventListener('click', () => {
-  document.getElementById('podium-modal')?.classList.add('hidden');
-});
-document.getElementById('close-podium-btn-2')?.addEventListener('click', () => {
-  document.getElementById('podium-modal')?.classList.add('hidden');
-});
-document.getElementById('podium-modal')?.addEventListener('click', (e) => {
-  if (e.target === document.getElementById('podium-modal')) {
-    document.getElementById('podium-modal').classList.add('hidden');
-  }
-});
-
-// ── Initial Setup ────────────────────────────────────────────────────────────
+// Initial Setup
 switchView('player'); // Set default tab to player
 renderRoom();
 startTimerTick();
